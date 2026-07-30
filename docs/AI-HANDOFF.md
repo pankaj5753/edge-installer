@@ -204,16 +204,21 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
 
 # Next Priorities
 
-1. Run `release/download-images.sh 1.0.0 1.0.0 1.0.0 1.0.0` (once all three
-   `1.0.0` images are confirmed in ECR) → `package-release.sh` →
-   `publish-bundle.sh` to produce and publish the first real bundle.
-2. Run `install.sh` end-to-end on a real Linux host - the single biggest
+1. Push `edge-installer` to GitLab too (currently GitHub-only), so Jenkins
+   can check it out. Confirm Jenkins' AWS credentials have S3 write access
+   to `sportsmed-edge-installer-app-bucket`. Then create a Jenkins job from
+   the root `Jenkinsfile` (added 2026-07-30, parameterized: UI_TAG/API_TAG/
+   DB_TAG) to automate download-images → package-release → publish-bundle.
+2. Until #1 is set up, run those three scripts manually (once all three
+   `1.0.0` images are confirmed in ECR) to produce and publish the first
+   real bundle.
+3. Run `install.sh` end-to-end on a real Linux host - the single biggest
    unverified piece of this whole project.
-3. Configure S3 lifecycle/versioning on `sportsmed-edge-installer-app-bucket`
+4. Configure S3 lifecycle/versioning on `sportsmed-edge-installer-app-bucket`
    for the 12-month retention requirement.
-4. Get confirmation on ADR-012/ADR-013 (Teams message drafted, not sent).
-5. Post the EDG-15 JIRA status update (drafted, not posted).
-6. Resolve edge-api's deferred issues (ADR-016) before any hospital-facing
+5. Get confirmation on ADR-012/ADR-013 (Teams message drafted, not sent).
+6. Post the EDG-15 JIRA status update (drafted, not posted).
+7. Resolve edge-api's deferred issues (ADR-016) before any hospital-facing
    release.
 
 ---
