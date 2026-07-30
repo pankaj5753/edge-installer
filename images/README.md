@@ -15,4 +15,4 @@ Both files are release build artifacts (gitignored) - regenerate them with
 **All three images must exist before a release bundle can be cut**
 (EDG-15 does not define a partial/API-only install mode). As of
 2026-07-30 all three (`snn-edge-ui`, `snn-edge-api`, `snn-edge-db`) are
-available in ECR at `1.0.0` - see `docs/AI-HANDOFF.md` for current tags.
+available in ECR at `1.0.0` - see `docs/HANDOFF.md` for current tags.

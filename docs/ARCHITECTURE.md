@@ -74,7 +74,7 @@ Image:
 `snn-edge-api`, tag controlled via `API_IMAGE_TAG` in `.env` (ADR-011).
 NOTE: current ECR repo is `sandbox/bridge/snn-edge` with image tag
 `snn-edge-api-3` - predates ADR-011, needs reconciling (see
-AI-HANDOFF.md).
+HANDOFF.md).
 
 Port:
 

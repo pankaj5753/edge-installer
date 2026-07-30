@@ -15,7 +15,7 @@ See `../docs/ARCHITECTURE.md` for the architecture and
 ## Current status
 
 All three images (`snn-edge-ui`, `snn-edge-api`, `snn-edge-db`) are
-available in ECR at `1.0.0` as of 2026-07-30. See `docs/AI-HANDOFF.md`
+available in ECR at `1.0.0` as of 2026-07-30. See `docs/HANDOFF.md`
 for what's still pending before the first real bundle ships.
 
 ## Layout

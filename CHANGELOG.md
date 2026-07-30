@@ -52,7 +52,7 @@ per ADR-008 / EDG-15 AC5 (semantic versioning).
 
 - Image naming confirmed as `snn-edge-ui` / `snn-edge-api` / `snn-edge-db`
   (EDG-16 + ADR-004) - resolves the earlier discrepancy with EDG-15's
-  example command and AI-HANDOFF.md/ADR-004's older names.
+  example command and HANDOFF.md/ADR-004's older names.
 - edge-ui image not yet delivered; no valid release bundle can be cut
   until it exists (see `images/PLACEHOLDER-edge-ui.md`).
 - CI/S3 publication, signed URLs, 7-day expiry, and 12-month retention

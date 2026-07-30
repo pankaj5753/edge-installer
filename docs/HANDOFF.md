@@ -1,4 +1,4 @@
-# AI Handoff Document
+# Handoff Document
 
 ## Project Name
 
@@ -60,22 +60,11 @@ edge-install-x.y.z-linux-x64.tar.gz
 
 # Repositories
 
-Two repos, each tracking one JIRA story:
+- `edge-installer` (EDG-15)
+- `edge-containers` (EDG-16) - contains `edge-ui/`, `edge-api/`, `edge-db/`
 
-- **`edge-installer`** (EDG-15) - https://github.com/pankaj5753/edge-installer
-- **`edge-containers`** (EDG-16) - https://github.com/pankaj5753/edge-containers
-  (contains `edge-ui/`, `edge-api/`, `edge-db/`)
-
-Both are personal GitHub mirrors, not the official repos. The official
-source is Smith+Nephew's GitLab (`gitlab.com/smithandnephew/sportsmed/aet/
-edge-app/*`), reachable only from the work laptop + VPN, which doesn't have
-Claude Code. Workflow: fixes happen here against GitHub, then get manually
-ported to GitLab from the work laptop and tested via the real Jenkins
-(VPN-only). **This means GitHub and GitLab can drift** - always confirm
-what's actually on GitLab before assuming a fix landed there.
-
-`edge-installer` was local-only until 2026-07-30; both repos are now
-pushed to GitHub as of this session.
+Official source: Smith+Nephew GitLab
+(`gitlab.com/smithandnephew/sportsmed/aet/edge-app/*`).
 
 ---
 
@@ -132,11 +121,11 @@ Jenkins pipeline run succeeded 2026-07-30 after fixing, in order:
 5. `angular.json`'s `test` target had no `buildTarget` wired up at all, so
    `ng test` failed unconditionally regardless of CI config. Fixed by
    pointing it at the existing `dev` build configuration.
-6. `Dockerfile` on GitLab was accidentally swapped with `docker-compose.yml`
-   content during manual porting - corrected.
+6. `Dockerfile` in the repo was accidentally swapped with `docker-compose.yml`
+   content during a manual edit - corrected.
 
-App code itself (components, routing, wizard flow) is unowned by this
-session - still the edge-ui dev team's.
+App code itself (components, routing, wizard flow) is owned by the
+edge-ui dev team.
 
 ## edge-installer (EDG-15)
 
@@ -172,8 +161,8 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
   via Docker Desktop on Windows. The full 3-container stack, `preflight.sh`
   on real Linux, and the complete install sequence are unverified.
 - `release/download-images.sh` / `package-release.sh` / `publish-bundle.sh`
-  have never been run for real (no working AWS credentials on this
-  machine) - reviewed and fixed by reading, not by executing.
+  have never been run for real (no working AWS credentials available where
+  this was written) - reviewed and fixed by reading, not by executing.
 
 **Real gaps against EDG-15 ACs:**
 - **12-month prior-version retention (AC5)**: needs S3 versioning/lifecycle
@@ -185,8 +174,9 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
   days. Use long-lived IAM user credentials to get a genuine 7-day window.
 - **"CI builds the bundle once"**: currently a manual script run
   (`download-images.sh` → `package-release.sh` → `publish-bundle.sh`), not
-  an automated CI trigger. Acceptable for first delivery; worth automating
-  later.
+  an automated CI trigger. A root `Jenkinsfile` exists to automate this
+  once set up on the official Jenkins instance. Acceptable for first
+  delivery either way.
 - Emailing the checksum/link to the hospital IT contact (Step 1) is a
   process step, not something to automate here.
 
@@ -194,21 +184,20 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
 - edge-api's secret handling and entrypoint bug (ADR-016).
 
 **Unconfirmed:**
-- Two open questions (DB password scope, digest-pinning approach) - Teams
-  message drafted, not yet sent (ADR-012, ADR-013).
+- Two open questions (DB password scope, digest-pinning approach) - see
+  ADR-012, ADR-013.
 - Whether all three `1.0.0` images are actually confirmed pushed to ECR
-  right now, or still pending a Jenkins run on the GitLab side for
-  edge-api/edge-db.
+  right now, or still pending a Jenkins run for edge-api/edge-db.
 
 ---
 
 # Next Priorities
 
-1. Push `edge-installer` to GitLab too (currently GitHub-only), so Jenkins
-   can check it out. Confirm Jenkins' AWS credentials have S3 write access
-   to `sportsmed-edge-installer-app-bucket`. Then create a Jenkins job from
-   the root `Jenkinsfile` (added 2026-07-30, parameterized: UI_TAG/API_TAG/
-   DB_TAG) to automate download-images → package-release → publish-bundle.
+1. Set up the official Jenkins instance to run the root `Jenkinsfile`
+   (parameterized: UI_TAG/API_TAG/DB_TAG) to automate
+   download-images → package-release → publish-bundle. Confirm Jenkins'
+   AWS credentials have S3 write access to
+   `sportsmed-edge-installer-app-bucket`.
 2. Until #1 is set up, run those three scripts manually (once all three
    `1.0.0` images are confirmed in ECR) to produce and publish the first
    real bundle.
@@ -216,21 +205,16 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
    unverified piece of this whole project.
 4. Configure S3 lifecycle/versioning on `sportsmed-edge-installer-app-bucket`
    for the 12-month retention requirement.
-5. Get confirmation on ADR-012/ADR-013 (Teams message drafted, not sent).
-6. Post the EDG-15 JIRA status update (drafted, not posted).
+5. Get confirmation on ADR-012/ADR-013.
+6. Post the EDG-15 status update.
 7. Resolve edge-api's deferred issues (ADR-016) before any hospital-facing
    release.
 
 ---
 
-# Pending Human Actions
+# Pending Follow-Ups
 
-Drafted but not sent/posted - checked into `docs/drafts/`:
-
-1. **Teams message** (ADR-012/ADR-013 open questions) -
-   `docs/drafts/teams-message-open-questions.md`
-2. **JIRA EDG-15 status comment** - `docs/drafts/jira-edg15-status-update.md`
-3. **JIRA EDG-16 status comment** - not yet drafted
-4. **Message to Naresh** (edge-api ECR naming) -
-   `docs/drafts/message-naresh-ecr-consistency.md` - resolved/moot, Naresh
-   already fixed this; can be marked done
+- Follow up on the two open questions in ADR-012/ADR-013.
+- Post the EDG-15 status update.
+- Draft and post the EDG-16 status update.
+- edge-api ECR naming - already resolved, no action needed.

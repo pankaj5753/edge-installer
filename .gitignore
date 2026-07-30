@@ -12,3 +12,6 @@ images/DIGESTS
 
 # Release output
 dist/
+
+# Working notes / message drafts - local only, never committed
+docs/drafts/

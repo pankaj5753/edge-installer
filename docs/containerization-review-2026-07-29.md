@@ -120,7 +120,7 @@ none of EDG-16 AC1's containerization requirements (two-stage Node
 termination, `/v1/**` and `/api/**` reverse proxy to `edge-api:8080`)
 have been started. This is the single largest gap blocking EDG-15 end to
 end (installer team is already blocked waiting on this image — see
-`docs/AI-HANDOFF.md`).
+`docs/HANDOFF.md`).
 
 ### 4. edge-ui's production build is currently broken
 
@@ -160,10 +160,9 @@ is the confirmed `snn-edge-api` (ADR-011):
 | `docker-compose.yml` (`image:`) | `snn/edge-api:${IMAGE_TAG}` (note the slash) |
 | Confirmed (ADR-011) | `sandbox/bridge/snn-edge-api`, semver tag e.g. `2.1.0` |
 
-This is the same underlying issue already raised with Naresh
-(`docs/drafts/message-naresh-ecr-consistency.md`) but now confirmed at
-the source — the Jenkinsfile is where the wrong repo name and
-build-counter tagging actually originate.
+This is the same underlying issue already raised with Naresh separately,
+but now confirmed at the source — the Jenkinsfile is where the wrong
+repo name and build-counter tagging actually originate.
 
 ### 6. edge-api and edge-db's own `docker-compose.yml` files publish ports that should be internal-only
 
@@ -253,8 +252,7 @@ which is fine on its own but wasn't a deliberate decision to confirm).
    actually run: create ECR repo `sandbox/bridge/snn-edge-ui`, configure a
    `NodeJS-20` Jenkins tool, then run it once to produce the first image.
 5. Align edge-api's Jenkinsfile to push to `sandbox/bridge/snn-edge-api`
-   with semver tags (tracked separately in
-   `docs/drafts/message-naresh-ecr-consistency.md`).
+   with semver tags.
 6. Switch edge-api runtime stage to a Corretto 21 JRE Alpine base image.
 7. Align edge-db's tagging to real semver (low priority, already
    functional).

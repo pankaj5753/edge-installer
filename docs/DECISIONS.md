@@ -201,7 +201,7 @@ Final image names are `snn-edge-ui`, `snn-edge-api`, `snn-edge-db`.
 
 Reason:
 
-AI-HANDOFF.md/ADR-004 (`snn-edge-db`, `snn-edge`), EDG-16
+HANDOFF.md/ADR-004 (`snn-edge-db`, `snn-edge`), EDG-16
 (`snn-edge-ui`, `snn-edge-api`), and EDG-15's example command
 (`edge-agent`, `edge-db`, `nginx`) all used different names. Confirmed
 by the requester on 2026-07-29 as `snn-edge-ui` / `snn-edge-api` /
@@ -215,8 +215,7 @@ suffix, and existing tags (`snn-edge-api-2/3/5`) are a build counter
 rather than semver. edge-db's repo (`sandbox/bridge/snn-edge-db`,
 tagged `1.0.4`) is the correct reference pattern. ECR can't rename a
 repo in place, so this needs a new repo, not a fix to the existing one.
-See AI-HANDOFF.md edge-api section and
-`docs/drafts/message-naresh-ecr-consistency.md`.
+See HANDOFF.md edge-api section. Since resolved.
 
 Status:
 
@@ -244,9 +243,7 @@ ticket.
 
 Status:
 
-Proposed - working assumption. Teams message to stakeholder drafted
-2026-07-29 (not yet sent - see AI-HANDOFF.md "Pending Human Actions"),
-awaiting confirmation.
+Proposed - working assumption, pending confirmation from the stakeholder.
 
 ---
 
@@ -270,8 +267,7 @@ breaking AC3/AC9's tag-based update flow.
 
 Status:
 
-Proposed. Teams message to stakeholder drafted 2026-07-29 (not yet sent
-- see AI-HANDOFF.md "Pending Human Actions"), awaiting confirmation.
+Proposed, pending confirmation from the stakeholder.
 
 ---
 

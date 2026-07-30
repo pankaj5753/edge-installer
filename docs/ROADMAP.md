@@ -39,7 +39,7 @@
 
 #### Installer Repository
 
-- [x] Create repository - `github.com/pankaj5753/edge-installer`
+- [x] Create repository
 - [x] Create README
 - [x] Create CHANGELOG
 
