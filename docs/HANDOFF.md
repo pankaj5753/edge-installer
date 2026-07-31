@@ -186,8 +186,17 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
 **Unconfirmed:**
 - Two open questions (DB password scope, digest-pinning approach) - see
   ADR-012, ADR-013.
-- Whether all three `1.0.0` images are actually confirmed pushed to ECR
-  right now, or still pending a Jenkins run for edge-api/edge-db.
+
+**Confirmed 2026-07-31:** all three images (`snn-edge-ui`, `snn-edge-api`,
+`snn-edge-db`) are in ECR at `1.0.0` with the dual-tag scheme working
+correctly on all three.
+
+The root `Jenkinsfile` is now set up on the official Jenkins instance and
+pushed to GitLab, but its first build failed with empty `UI_TAG`/`API_TAG`/
+`DB_TAG` parameters - expected Jenkins behavior for a brand-new
+parameterized pipeline's very first run (it hasn't parsed the Jenkinsfile
+to learn about the `parameters` block yet). Re-running should pick up the
+`1.0.0` defaults correctly.
 
 ---
 
