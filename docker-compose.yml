@@ -1,0 +1,78 @@
+services:
+  edge-db:
+    image: snn-edge-db:${DB_IMAGE_TAG}
+    container_name: edge-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${EDGE_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${EDGE_DB_NAME}
+      MYSQL_USER: ${EDGE_DB_USER}
+      MYSQL_PASSWORD: ${EDGE_DB_PASSWORD}
+    volumes:
+      - edge-db-data:/var/lib/mysql
+    networks:
+      - edge-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${EDGE_DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  edge-api:
+    image: snn-edge-api:${API_IMAGE_TAG}
+    container_name: edge-api
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://edge-db:3306/${EDGE_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${EDGE_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${EDGE_DB_PASSWORD}
+      LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
+    volumes:
+      - edge-logs:/var/log/edge-snn
+    depends_on:
+      edge-db:
+        condition: service_healthy
+    networks:
+      - edge-net
+    healthcheck:
+      # Hits Spring Boot's actuator endpoint directly (EDG-16 AC7).
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  edge-ui:
+    image: snn-edge-ui:${UI_IMAGE_TAG}
+    container_name: edge-ui
+    restart: unless-stopped
+    ports:
+      - "${BIND_PORT:-443}:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
+      - edge-logs:/var/log/edge-snn
+    environment:
+      LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
+    depends_on:
+      edge-api:
+        condition: service_healthy
+    networks:
+      - edge-net
+    healthcheck:
+      # Process-level check (EDG-16 AC7: "Nginx checks its own process").
+      test: ["CMD-SHELL", "pgrep -x nginx > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  edge-net:
+    driver: bridge
+
+volumes:
+  edge-db-data:
+    name: edge-db-data
+  edge-logs:
+    name: edge-logs

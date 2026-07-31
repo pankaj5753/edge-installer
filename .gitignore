@@ -1,0 +1,17 @@
+# Generated at install time - never commit real secrets or certs
+.env
+.env.bak
+certs/*.crt
+certs/*.key
+install.log
+preflight-report.txt
+
+# Release build artifacts, not source
+images/*.tar.gz
+images/DIGESTS
+
+# Release output
+dist/
+
+# Working notes / message drafts - local only, never committed
+docs/drafts/
