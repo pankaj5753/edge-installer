@@ -168,10 +168,15 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
 - **12-month prior-version retention (AC5)**: needs S3 versioning/lifecycle
   policy on `sportsmed-edge-installer-app-bucket` - a bucket-level config,
   not a script.
-- **7-day signed URL (AC1, Step 1)**: `publish-bundle.sh` requests this,
-  but if run with temporary/assumed-role AWS credentials, the actual URL
-  validity is capped at that session's remaining lifetime, not the full 7
-  days. Use long-lived IAM user credentials to get a genuine 7-day window.
+- **7-day signed URL (AC1, Step 1)**: confirmed broken 2026-08-04 - the
+  July 31 build's URL was dead within days (`ExpiredToken`). Jenkins signs
+  with temporary/STS credentials (`ASIA...` + security token, confirmed
+  from the actual URL), which cap real validity regardless of
+  `--expires-in`. Needs a long-lived IAM user access key (`AKIA...`)
+  scoped to just this bucket, used specifically for presigning - an
+  AWS/Jenkins credentials change, not a script fix. Workaround added:
+  `release/presign.sh` re-signs a fresh URL for an already-uploaded
+  bundle on demand, without rebuilding/republishing anything.
 - **"CI builds the bundle once"**: currently a manual script run
   (`download-images.sh` → `package-release.sh` → `publish-bundle.sh`), not
   an automated CI trigger. A root `Jenkinsfile` exists to automate this
