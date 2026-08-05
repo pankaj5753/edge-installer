@@ -10,7 +10,7 @@ pipeline {
     environment {
         AWS_REGION     = "us-east-2"
         AWS_ACCOUNT_ID = "427479402536"
-        S3_BUCKET      = "sportsmed-edge-installer-app-bucket"
+        S3_BUCKET      = "bridge-dev1-bucket-edge-web-portal"
     }
 
     options {
