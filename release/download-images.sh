@@ -38,6 +38,9 @@ log "Logging in to ECR (${REGISTRY})..."
 aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AWS --password-stdin "${REGISTRY}"
 
 mkdir -p "${IMAGES_DIR}"
+# Clear any leftover archive/DIGESTS from a prior run so a re-triggered
+# build can never mix stale files with this run's fresh pull.
+rm -f "${IMAGES_DIR}"/edge-images-*.tar.gz "${IMAGES_DIR}/DIGESTS"
 
 # ECR repository names (include the sandbox/bridge/ org prefix) vs. the
 # short local names docker-compose.yml and install.sh expect once loaded.

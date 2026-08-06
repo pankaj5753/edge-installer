@@ -156,13 +156,28 @@ first real run: missing `sandbox/bridge/` prefix on the ECR pull path, and
 Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
 
 **Genuinely untested - highest-value next step:**
-- `install.sh` has never been run end-to-end against real, ECR-pulled
-  images on a real Linux host. All testing so far is edge-ui-only, locally,
-  via Docker Desktop on Windows. The full 3-container stack, `preflight.sh`
-  on real Linux, and the complete install sequence are unverified.
+- First real EC2 install attempts started 2026-08-06. Amazon Linux 2023
+  host: preflight correctly failed (Compose plugin not installed on that
+  host, and AL2023 is not in EDG-15 AC5's supported OS list - Ubuntu
+  22.04/24.04 and RHEL 8/9 only). Retried on Ubuntu 24.04: preflight
+  passed cleanly.
+- Two real packaging bugs found and fixed 2026-08-06:
+  1. `package-release.sh` never copied the root `VERSION` file into the
+     bundle - every bundle built by this script has shipped without it.
+     Fixed: now copied into the bundle root.
+  2. Digest mismatch on `snn-edge-ui` when installing a bundle from a
+     second Jenkins trigger (same images, published to a new S3 bucket).
+     Root cause: `images/edge-images-{ver}.tar.gz` and `images/DIGESTS`
+     must come from the same `download-images.sh` run to match - a
+     re-triggered Jenkins build reusing a workspace can leave a stale file
+     from an earlier run paired with a fresh one from the new run. Fixed:
+     `download-images.sh` now deletes any leftover archive/DIGESTS at the
+     start of every run, so a fresh run can never mix with stale files.
+  - Not yet re-tested end-to-end with a freshly-built bundle since these
+    fixes landed - still the highest-value next step.
 - `release/download-images.sh` / `package-release.sh` / `publish-bundle.sh`
-  have never been run for real (no working AWS credentials available where
-  this was written) - reviewed and fixed by reading, not by executing.
+  had never been run for real until 2026-08; issues above found by actual
+  execution, not by reading.
 
 **Real gaps against EDG-15 ACs:**
 - **12-month prior-version retention (AC5)**: needs S3 versioning/lifecycle
