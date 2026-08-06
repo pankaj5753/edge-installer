@@ -136,10 +136,10 @@ section directly.
 5. **Missing image archive** — `images/edge-images-{semver}.tar.gz` isn't
    present. Re-extract the bundle; if it's still missing, re-download the
    bundle (it may not have transferred completely).
-6. **Image digest mismatch** — the loaded image doesn't match
-   `images/DIGESTS`. Do not proceed; re-download the bundle and re-verify
-   its checksum (see Step 1). This indicates a corrupted or tampered
-   archive.
+6. **Image archive checksum mismatch** — `images/edge-images-{semver}.tar.gz`
+   doesn't match `images/DIGESTS`. Do not proceed; re-download the bundle
+   and re-verify its checksum (see Step 1). This indicates a corrupted or
+   tampered archive.
 7. **Static IP / bind port not provided** — install.sh requires a
    non-empty static LAN IP; re-run `./install.sh` and enter a valid value
    when prompted.

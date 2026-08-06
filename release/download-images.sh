@@ -7,7 +7,8 @@
 # Requires AWS credentials and internet access - this is NOT run on the
 # hospital host (ADR-007).
 #
-# All three images must exist before a release can be cut.
+# All three images must exist before a release can be cut (edge-ui is
+# still pending - see images/PLACEHOLDER-edge-ui.md).
 #
 # Usage:
 #   AWS_REGION=us-east-1 AWS_ACCOUNT_ID=123456789012 \
@@ -37,7 +38,6 @@ log "Logging in to ECR (${REGISTRY})..."
 aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AWS --password-stdin "${REGISTRY}"
 
 mkdir -p "${IMAGES_DIR}"
-
 # Clear any leftover archive/DIGESTS from a prior run so a re-triggered
 # build can never mix stale files with this run's fresh pull.
 rm -f "${IMAGES_DIR}"/edge-images-*.tar.gz "${IMAGES_DIR}/DIGESTS"
@@ -74,12 +74,13 @@ ARCHIVE="${IMAGES_DIR}/edge-images-${SEMVER}.tar.gz"
 log "Saving ${LOCAL_REFS[*]} -> $(basename "${ARCHIVE}")"
 docker save "${LOCAL_REFS[@]}" | gzip > "${ARCHIVE}"
 
-log "Recording image digests to images/DIGESTS"
-: > "${IMAGES_DIR}/DIGESTS"
-for ref in "${LOCAL_REFS[@]}"; do
-    id="$(docker image inspect "${ref}" --format '{{.Id}}')"
-    printf '%s %s\n' "${ref}" "${id}" >> "${IMAGES_DIR}/DIGESTS"
-done
+# Archive-level checksum, not per-image Docker IDs - those are computed
+# differently across Docker Engine versions/storage backends even for
+# identical image content, which caused false-positive mismatches between
+# the build host and install host.
+log "Recording archive checksum to images/DIGESTS"
+ARCHIVE_SHA="$(sha256sum "${ARCHIVE}" | awk '{print $1}')"
+printf '%s %s\n' "$(basename "${ARCHIVE}")" "${ARCHIVE_SHA}" > "${IMAGES_DIR}/DIGESTS"
 
 log "Syncing .env.example with the pulled tags..."
 sed -i.bak \

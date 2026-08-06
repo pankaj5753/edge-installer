@@ -63,19 +63,21 @@ os_supported() {
     esac
 }
 
-# Verifies a just-loaded image's content-addressable ID against the value
-# recorded in images/DIGESTS at release-build time (EDG-15 AC11). Image IDs
-# (unlike registry RepoDigests) survive docker save/load intact, which is
-# what makes this check meaningful for offline-loaded images.
-verify_digest() {
-    local repo="$1" tag="$2" ref="${1}:${2}"
-    local expected actual
-    expected="$(awk -v r="${ref}" '$1==r {print $2}' "${IMAGES_DIR}/DIGESTS" 2>/dev/null || true)"
-    [[ -n "${expected}" ]] || die "No pinned digest found for ${ref} in images/DIGESTS. See README.md Troubleshooting #6."
-    actual="$(docker image inspect "${ref}" --format '{{.Id}}' 2>/dev/null || true)"
-    [[ -n "${actual}" ]] || die "Image ${ref} was not loaded successfully. See README.md Troubleshooting #5."
-    [[ "${actual}" == "${expected}" ]] || die "Digest mismatch for ${ref}: expected ${expected}, got ${actual}. See README.md Troubleshooting #6."
-    log "OK   - ${ref} digest verified"
+# Verifies the combined image archive's SHA-256 against the value recorded
+# in images/DIGESTS at release-build time (EDG-15 AC11), before docker load
+# touches it. Deliberately a plain file checksum rather than a per-image
+# Docker ID comparison - Docker's internal image IDs are computed
+# differently across Engine versions/storage backends for identical image
+# content, which caused false-positive mismatches between the build host
+# and the install host.
+verify_archive_checksum() {
+    local archive="$1" archive_name expected actual
+    archive_name="$(basename "${archive}")"
+    expected="$(awk -v f="${archive_name}" '$1==f {print $2}' "${IMAGES_DIR}/DIGESTS" 2>/dev/null || true)"
+    [[ -n "${expected}" ]] || die "No pinned checksum found for ${archive_name} in images/DIGESTS. See README.md Troubleshooting #6."
+    actual="$(sha256sum "${archive}" | awk '{print $1}')"
+    [[ "${actual}" == "${expected}" ]] || die "Checksum mismatch for ${archive_name}: expected ${expected}, got ${actual}. See README.md Troubleshooting #6."
+    log "OK   - ${archive_name} checksum verified"
 }
 
 # Polls `docker compose ps` health status for all three services until

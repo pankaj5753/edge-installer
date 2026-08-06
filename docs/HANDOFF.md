@@ -156,22 +156,47 @@ first real run: missing `sandbox/bridge/` prefix on the ECR pull path, and
 Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
 
 **Genuinely untested - highest-value next step:**
-- `install.sh` has never been run end-to-end against real, ECR-pulled
-  images on a real Linux host. All testing so far is edge-ui-only, locally,
-  via Docker Desktop on Windows. The full 3-container stack, `preflight.sh`
-  on real Linux, and the complete install sequence are unverified.
+- First real EC2 install attempts started 2026-08-06. Amazon Linux 2023
+  host: preflight correctly failed (Compose plugin not installed on that
+  host, and AL2023 is not in EDG-15 AC5's supported OS list - Ubuntu
+  22.04/24.04 and RHEL 8/9 only). Retried on Ubuntu 24.04: preflight
+  passed cleanly.
+- Two real packaging bugs found and fixed 2026-08-06:
+  1. `package-release.sh` never copied the root `VERSION` file into the
+     bundle - every bundle built by this script has shipped without it.
+     Fixed: now copied into the bundle root.
+  2. Digest mismatch on `snn-edge-ui`, reproducible identically across
+     three separate builds/buckets. Root cause confirmed from Jenkins
+     console log, not a stale-workspace issue: Docker's internal
+     per-image ID (`docker image inspect --format '{{.Id}}'`) is computed
+     differently across Docker Engine versions/storage backends for the
+     exact same image content - the Jenkins host and the install host
+     (Docker 29.7.2) disagreed on the same `snn-edge-ui:1.0.0` image's ID.
+     `verify_digest`'s assumption that image IDs survive save/load intact
+     across hosts doesn't hold in practice. Fixed: replaced per-image
+     Docker-ID comparison with a plain SHA-256 checksum of the combined
+     archive file itself (`verify_archive_checksum` in `lib/common.sh`),
+     checked before `docker load` runs - a file checksum has nothing to
+     do with Docker and is identical on every host by construction.
+  - Not yet re-tested end-to-end with a freshly-built bundle since these
+    fixes landed - still the highest-value next step.
 - `release/download-images.sh` / `package-release.sh` / `publish-bundle.sh`
-  have never been run for real (no working AWS credentials available where
-  this was written) - reviewed and fixed by reading, not by executing.
+  had never been run for real until 2026-08; issues above found by actual
+  execution, not by reading.
 
 **Real gaps against EDG-15 ACs:**
 - **12-month prior-version retention (AC5)**: needs S3 versioning/lifecycle
   policy on `sportsmed-edge-installer-app-bucket` - a bucket-level config,
   not a script.
-- **7-day signed URL (AC1, Step 1)**: `publish-bundle.sh` requests this,
-  but if run with temporary/assumed-role AWS credentials, the actual URL
-  validity is capped at that session's remaining lifetime, not the full 7
-  days. Use long-lived IAM user credentials to get a genuine 7-day window.
+- **7-day signed URL (AC1, Step 1)**: confirmed broken 2026-08-04 - the
+  July 31 build's URL was dead within days (`ExpiredToken`). Jenkins signs
+  with temporary/STS credentials (`ASIA...` + security token, confirmed
+  from the actual URL), which cap real validity regardless of
+  `--expires-in`. Needs a long-lived IAM user access key (`AKIA...`)
+  scoped to just this bucket, used specifically for presigning - an
+  AWS/Jenkins credentials change, not a script fix. Workaround added:
+  `release/presign.sh` re-signs a fresh URL for an already-uploaded
+  bundle on demand, without rebuilding/republishing anything.
 - **"CI builds the bundle once"**: currently a manual script run
   (`download-images.sh` → `package-release.sh` → `publish-bundle.sh`), not
   an automated CI trigger. A root `Jenkinsfile` exists to automate this
@@ -186,8 +211,17 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
 **Unconfirmed:**
 - Two open questions (DB password scope, digest-pinning approach) - see
   ADR-012, ADR-013.
-- Whether all three `1.0.0` images are actually confirmed pushed to ECR
-  right now, or still pending a Jenkins run for edge-api/edge-db.
+
+**Confirmed 2026-07-31:** all three images (`snn-edge-ui`, `snn-edge-api`,
+`snn-edge-db`) are in ECR at `1.0.0` with the dual-tag scheme working
+correctly on all three.
+
+The root `Jenkinsfile` is now set up on the official Jenkins instance and
+pushed to GitLab, but its first build failed with empty `UI_TAG`/`API_TAG`/
+`DB_TAG` parameters - expected Jenkins behavior for a brand-new
+parameterized pipeline's very first run (it hasn't parsed the Jenkinsfile
+to learn about the `parameters` block yet). Re-running should pick up the
+`1.0.0` defaults correctly.
 
 ---
 

@@ -31,15 +31,12 @@ load_env
 # --- 1. Preflight (writes preflight-report.txt, aborts on failure) --------
 "${SCRIPT_DIR}/preflight.sh"
 
-# --- 2. Load images and verify digests --------------------------------------
+# --- 2. Verify archive checksum, then load images ---------------------------
 ARCHIVE="${IMAGES_DIR}/edge-images-${VERSION}.tar.gz"
 [[ -f "${ARCHIVE}" ]] || die "Missing ${ARCHIVE}. See README.md Troubleshooting #5."
+verify_archive_checksum "${ARCHIVE}"
 log "Loading images from $(basename "${ARCHIVE}")..."
 docker load -i "${ARCHIVE}"
-
-verify_digest "snn-edge-ui" "${UI_IMAGE_TAG}"
-verify_digest "snn-edge-api" "${API_IMAGE_TAG}"
-verify_digest "snn-edge-db" "${DB_IMAGE_TAG}"
 
 # --- 3. Static LAN IP and bind port (first run only, EDG-15 AC11/AC12) -----
 if [[ -z "${STATIC_IP:-}" ]]; then
