@@ -165,14 +165,19 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
   1. `package-release.sh` never copied the root `VERSION` file into the
      bundle - every bundle built by this script has shipped without it.
      Fixed: now copied into the bundle root.
-  2. Digest mismatch on `snn-edge-ui` when installing a bundle from a
-     second Jenkins trigger (same images, published to a new S3 bucket).
-     Root cause: `images/edge-images-{ver}.tar.gz` and `images/DIGESTS`
-     must come from the same `download-images.sh` run to match - a
-     re-triggered Jenkins build reusing a workspace can leave a stale file
-     from an earlier run paired with a fresh one from the new run. Fixed:
-     `download-images.sh` now deletes any leftover archive/DIGESTS at the
-     start of every run, so a fresh run can never mix with stale files.
+  2. Digest mismatch on `snn-edge-ui`, reproducible identically across
+     three separate builds/buckets. Root cause confirmed from Jenkins
+     console log, not a stale-workspace issue: Docker's internal
+     per-image ID (`docker image inspect --format '{{.Id}}'`) is computed
+     differently across Docker Engine versions/storage backends for the
+     exact same image content - the Jenkins host and the install host
+     (Docker 29.7.2) disagreed on the same `snn-edge-ui:1.0.0` image's ID.
+     `verify_digest`'s assumption that image IDs survive save/load intact
+     across hosts doesn't hold in practice. Fixed: replaced per-image
+     Docker-ID comparison with a plain SHA-256 checksum of the combined
+     archive file itself (`verify_archive_checksum` in `lib/common.sh`),
+     checked before `docker load` runs - a file checksum has nothing to
+     do with Docker and is identical on every host by construction.
   - Not yet re-tested end-to-end with a freshly-built bundle since these
     fixes landed - still the highest-value next step.
 - `release/download-images.sh` / `package-release.sh` / `publish-bundle.sh`

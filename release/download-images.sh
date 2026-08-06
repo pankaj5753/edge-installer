@@ -74,12 +74,13 @@ ARCHIVE="${IMAGES_DIR}/edge-images-${SEMVER}.tar.gz"
 log "Saving ${LOCAL_REFS[*]} -> $(basename "${ARCHIVE}")"
 docker save "${LOCAL_REFS[@]}" | gzip > "${ARCHIVE}"
 
-log "Recording image digests to images/DIGESTS"
-: > "${IMAGES_DIR}/DIGESTS"
-for ref in "${LOCAL_REFS[@]}"; do
-    id="$(docker image inspect "${ref}" --format '{{.Id}}')"
-    printf '%s %s\n' "${ref}" "${id}" >> "${IMAGES_DIR}/DIGESTS"
-done
+# Archive-level checksum, not per-image Docker IDs - those are computed
+# differently across Docker Engine versions/storage backends even for
+# identical image content, which caused false-positive mismatches between
+# the build host and install host.
+log "Recording archive checksum to images/DIGESTS"
+ARCHIVE_SHA="$(sha256sum "${ARCHIVE}" | awk '{print $1}')"
+printf '%s %s\n' "$(basename "${ARCHIVE}")" "${ARCHIVE_SHA}" > "${IMAGES_DIR}/DIGESTS"
 
 log "Syncing .env.example with the pulled tags..."
 sed -i.bak \
