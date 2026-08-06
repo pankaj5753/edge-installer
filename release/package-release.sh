@@ -30,6 +30,7 @@ BUNDLE_ROOT="${STAGE_DIR}/${BUNDLE_NAME}"
 mkdir -p "${BUNDLE_ROOT}/certs" "${BUNDLE_ROOT}/images" "${BUNDLE_ROOT}/lib"
 
 log "Staging bundle contents (EDG-15 AC2)..."
+cp "${SCRIPT_DIR}/VERSION" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/docker-compose.yml" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/.env.example" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/install.sh" "${BUNDLE_ROOT}/"
