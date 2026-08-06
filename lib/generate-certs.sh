@@ -32,12 +32,18 @@ fi
 
 log "Generating self-signed certificate for CN/SAN=${CN}"
 
-openssl req -x509 -nodes -newkey rsa:2048 \
+# "+" in the -subj value must be escaped - openssl's subject-string parser
+# treats an unescaped "+" as a multi-value-RDN separator (RFC 2253), which
+# silently breaks on the literal "Smith+Nephew" organization name.
+if ! OPENSSL_OUTPUT="$(openssl req -x509 -nodes -newkey rsa:2048 \
     -keyout "${CERTS_DIR}/edge.key" \
     -out "${CERTS_DIR}/edge.crt" \
     -days 825 \
-    -subj "/CN=${CN}/O=Smith+Nephew Edge Agent" \
-    -addext "subjectAltName=IP:${CN}" > /dev/null 2>&1
+    -subj "/CN=${CN}/O=Smith\+Nephew Edge Agent" \
+    -addext "subjectAltName=IP:${CN}" 2>&1)"; then
+    warn "${OPENSSL_OUTPUT}"
+    die "Certificate generation failed. See README.md Troubleshooting #10."
+fi
 
 chmod 600 "${CERTS_DIR}/edge.crt" "${CERTS_DIR}/edge.key"
 

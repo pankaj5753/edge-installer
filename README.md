@@ -151,6 +151,10 @@ section directly.
 9. **Bundle checksum mismatch (Step 1, before extraction)** — do not
    extract the bundle. Contact your S+N representative; do not attempt to
    proceed with a bundle that fails checksum verification.
+10. **Certificate generation failed** — `openssl req` printed an error
+    (shown above the failure message). Re-run `./install.sh`; if it
+    persists, verify `openssl version` is 1.1.1 or newer and that
+    `certs/` is writable.
 
 ## Building a release bundle (dev/release engineer, not hospital IT)
 
