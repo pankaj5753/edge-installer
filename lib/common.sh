@@ -11,6 +11,20 @@ log()  { printf '[edge-installer] %s\n' "$*"; }
 warn() { printf '[edge-installer] WARNING: %s\n' "$*" >&2; }
 die()  { printf '[edge-installer] ERROR: %s\n' "$*" >&2; exit 1; }
 
+# Redirects all subsequent stdout/stderr to the audit log (EDG-15 AC16),
+# falling back to a local file with a warning if /var/log/edge-agent isn't
+# writable (e.g. not running as root). Shared by install.sh and uninstall.sh.
+setup_audit_log() {
+    local log_dir="/var/log/edge-agent" log_file
+    if mkdir -p "${log_dir}" 2>/dev/null && [[ -w "${log_dir}" ]]; then
+        log_file="${log_dir}/install.log"
+    else
+        log_file="${SCRIPT_DIR}/install.log"
+        printf '[edge-installer] WARNING: cannot write to %s (run as root/sudo for the audit log required by EDG-15 AC16) - logging to %s instead\n' "${log_dir}" "${log_file}" >&2
+    fi
+    exec > >(tee -a "${log_file}") 2>&1
+}
+
 # Loads .env into the current shell's environment, creating it from
 # .env.example on first run (mode 600 - EDG-15 AC11).
 load_env() {

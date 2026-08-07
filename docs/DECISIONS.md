@@ -347,3 +347,32 @@ Status:
 
 Accepted (deferred, not resolved) - 2026-07-30. Must be revisited before
 any hospital-facing release.
+
+---
+
+## ADR-017
+
+Decision:
+
+`preflight.sh` remains offline-first and fails fast by default (EDG-15
+AC13), but now offers an opt-in exception: when only software
+(Docker Engine, Docker Compose plugin, OpenSSL) is missing - CPU, RAM,
+disk, and OS all pass - and a terminal is attached, the operator is
+interactively prompted to attempt automatic installation via the OS
+package manager (`lib/install-prereqs.sh`, Docker's official apt/dnf repo,
+not the distro's). Declining, or running non-interactively (CI, scripted
+installs), falls back to today's fail-fast behavior unchanged.
+
+Reason:
+
+EDG-15's original assumption was that hospital hosts have no internet
+access during install. Confirmed with the client (via Veera) that this
+isn't always true - some hosts may have internet. Rather than changing
+the default (which would break the offline guarantee for hosts that
+genuinely have none), this adds a narrow, explicit, opt-in path for hosts
+that do, without weakening the strict preflight-and-abort behavior
+everywhere else.
+
+Status:
+
+Accepted - 2026-08-07.

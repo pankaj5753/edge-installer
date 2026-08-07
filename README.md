@@ -23,12 +23,14 @@ for what's still pending before the first real bundle ships.
 ```text
 edge-installer/
 ├── install.sh               # main entry point - EDG-15 AC11 sequence, aborts on first failure
-├── preflight.sh              # CPU/RAM/disk/Docker/Compose/OS checks -> preflight-report.txt
+├── uninstall.sh               # stops/removes containers+images; --purge-data for a full wipe
+├── preflight.sh                # CPU/RAM/disk/Docker/Compose/OS checks -> preflight-report.txt
 ├── docker-compose.yml         # 3-service stack (EDG-16 AC4, AC7, AC8, AC10)
 ├── .env.example                # config template; install.sh copies this to .env (mode 600)
 ├── lib/
-│   ├── common.sh                # shared shell helpers (env, digests, health polling)
+│   ├── common.sh                # shared shell helpers (env, digests, health polling, audit log)
 │   ├── generate-certs.sh         # self-signed TLS cert for edge-ui (called by install.sh)
+│   ├── install-prereqs.sh         # opt-in auto-install of missing Docker/Compose/OpenSSL
 │   └── health-check.sh            # on-demand health snapshot (not used by install.sh's own poll)
 ├── certs/                    # ships empty; install.sh writes edge.crt/edge.key here (mode 600)
 ├── images/                   # combined image archive + digest manifest (see images/README.md)
@@ -59,7 +61,10 @@ sudo ./install.sh
 1. Preflight checks (CPU >= 4 cores, RAM >= 8GB, disk >= 100GB, Docker
    Engine >= 24, Docker Compose >= 2.20, OpenSSL present, OS in the
    supported list) — writes `preflight-report.txt` with remediation hints
-   for any failures.
+   for any failures. If only software (Docker/Compose/OpenSSL) is missing
+   and the host has internet access, you'll be prompted to attempt
+   automatic installation (ADR-017) — declining or running non-interactively
+   falls back to today's fail-fast behavior.
 2. `docker load`s `images/edge-images-{semver}.tar.gz` and verifies each
    loaded image's digest against `images/DIGESTS` — aborts on mismatch.
 3. Prompts for the static LAN IP and bind port (first run only) and writes
@@ -98,6 +103,20 @@ fingerprint matches the one `install.sh` printed, then accept it. The
 wizard itself (Environment health screen, /setup wireframe v2 flow) is
 served by the running `edge-ui`/`edge-api` containers and is out of scope
 for this repo.
+
+## Uninstalling
+
+```bash
+sudo ./uninstall.sh                # stops/removes containers, images, and edge-net
+sudo ./uninstall.sh --purge-data   # also permanently deletes DB data, logs, and the TLS cert
+sudo ./uninstall.sh --yes          # skip the confirmation prompt (still requires --purge-data separately)
+```
+
+By default, database data (`edge-db-data` volume), logs (`edge-logs`
+volume), and the generated TLS certificate/key are kept, so re-running
+`./install.sh` afterward reinstalls onto the same data without
+regenerating credentials. Pass `--purge-data` for a full, irreversible
+wipe.
 
 ## Updating a single service (offline equivalent of EDG-16 AC9)
 
@@ -155,6 +174,11 @@ section directly.
     (shown above the failure message). Re-run `./install.sh`; if it
     persists, verify `openssl version` is 1.1.1 or newer and that
     `certs/` is writable.
+11. **Automatic software installation failed** — the host may not have
+    internet access, or its package manager needs attention (proxy config,
+    locked apt/dnf, etc.). Falls back to manual installation per
+    Troubleshooting #1/#2 either way; the offline path always works
+    regardless of this failing.
 
 ## Building a release bundle (dev/release engineer, not hospital IT)
 

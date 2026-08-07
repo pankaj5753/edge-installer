@@ -12,15 +12,7 @@ cd "${SCRIPT_DIR}"
 
 VERSION="$(cat "${SCRIPT_DIR}/VERSION")"
 
-# --- Audit logging (EDG-15 AC16): everything below is captured -------------
-LOG_DIR="/var/log/edge-agent"
-if mkdir -p "${LOG_DIR}" 2>/dev/null && [[ -w "${LOG_DIR}" ]]; then
-    LOG_FILE="${LOG_DIR}/install.log"
-else
-    LOG_FILE="${SCRIPT_DIR}/install.log"
-    printf '[edge-installer] WARNING: cannot write to %s (run as root/sudo for the audit log required by EDG-15 AC16) - logging to %s instead\n' "${LOG_DIR}" "${LOG_FILE}" >&2
-fi
-exec > >(tee -a "${LOG_FILE}") 2>&1
+setup_audit_log
 
 log "==================================================================="
 log "Edge Agent Platform installer v${VERSION} - $(date -u +%Y-%m-%dT%H:%M:%SZ)"

@@ -129,17 +129,22 @@ edge-ui dev team.
 
 ## edge-installer (EDG-15)
 
-Scaffolded and implemented against the finalized EDG-15/EDG-16 acceptance
-criteria. All three images now exist in ECR, so a real bundle can be built
-- not yet actually built/tested end to end (see Pending Items below).
+Implemented against the finalized EDG-15/EDG-16 acceptance criteria.
+**First fully successful end-to-end install completed 2026-08-07** - all
+three containers healthy, setup wizard reachable in a browser. See
+Pending Items below for remaining gaps and history.
 
 Completed:
 
 - Bundle layout matching EDG-15 AC2
 - `install.sh` implementing the full EDG-15 AC11 sequence
-- `preflight.sh` (CPU/RAM/disk/Docker/Compose/OS checks + report)
-- Idempotent re-run behavior (AC12), offline-only operation (AC13), audit
-  logging (AC16), numbered troubleshooting (AC17)
+- `uninstall.sh` (keeps data by default; `--purge-data` for a full wipe)
+- `preflight.sh` (CPU/RAM/disk/Docker/Compose/OS checks + report), with an
+  opt-in prompt to auto-install missing software when internet is
+  available (ADR-017)
+- Idempotent re-run behavior (AC12), offline-first by default with the
+  ADR-017 opt-in exception (AC13), audit logging (AC16, shared via
+  `lib/common.sh`'s `setup_audit_log`), numbered troubleshooting (AC17)
 - `docker-compose.yml` per EDG-16 (healthchecks, restart policy, log volume)
 - `release/download-images.sh`, `release/package-release.sh`,
   `release/publish-bundle.sh` (S3 upload + presigned URL, added 2026-07-30)
@@ -222,11 +227,26 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
      unhealthy since creation, not just this run. Fixed: dropped `-x` for
      a substring match, still a process-level check per EDG-16 AC7's
      intent.
-  - Not yet re-tested with this fix - next step is confirming all three
-    containers report healthy together for the first time.
+  - **Re-tested 2026-08-07: first fully successful end-to-end install.**
+    All three containers came up healthy, `install.sh` completed, and the
+    setup wizard was reachable in a browser. First time the full EDG-15
+    AC11 sequence has run clean on a real host.
 - `release/download-images.sh` / `package-release.sh` / `publish-bundle.sh`
   had never been run for real until 2026-08; issues above found by actual
   execution, not by reading.
+
+**New capabilities added 2026-08-07, after the first successful install:**
+- `uninstall.sh`: stops/removes the containers, images, and `edge-net`
+  network. Keeps DB data, logs, and the TLS cert by default; `--purge-data`
+  does a full, irreversible wipe. Shipped in the bundle now
+  (`package-release.sh` updated to include it and `lib/install-prereqs.sh`).
+- Opt-in automatic prerequisite installation (ADR-017): `preflight.sh` now
+  offers to install missing Docker/Compose/OpenSSL via the OS package
+  manager when the only failures are software (not CPU/RAM/disk/OS) and a
+  terminal is attached - confirmed with the client (via Veera) that
+  hospital hosts may sometimes have internet access, unlike the original
+  EDG-15 AC13 assumption. Declining or running non-interactively keeps
+  today's strict offline fail-fast behavior. See `lib/install-prereqs.sh`.
 
 **Real gaps against EDG-15 ACs:**
 - **12-month prior-version retention (AC5)**: needs S3 versioning/lifecycle
@@ -271,22 +291,23 @@ to learn about the `parameters` block yet). Re-running should pick up the
 
 # Next Priorities
 
-1. Set up the official Jenkins instance to run the root `Jenkinsfile`
-   (parameterized: UI_TAG/API_TAG/DB_TAG) to automate
-   download-images → package-release → publish-bundle. Confirm Jenkins'
-   AWS credentials have S3 write access to
-   `sportsmed-edge-installer-app-bucket`.
-2. Until #1 is set up, run those three scripts manually (once all three
-   `1.0.0` images are confirmed in ECR) to produce and publish the first
-   real bundle.
-3. Run `install.sh` end-to-end on a real Linux host - the single biggest
-   unverified piece of this whole project.
-4. Configure S3 lifecycle/versioning on `sportsmed-edge-installer-app-bucket`
-   for the 12-month retention requirement.
-5. Get confirmation on ADR-012/ADR-013.
-6. Post the EDG-15 status update.
-7. Resolve edge-api's deferred issues (ADR-016) before any hospital-facing
-   release.
+Updated 2026-08-07 - the root `Jenkinsfile` is live on the official
+Jenkins instance and `install.sh` has now completed successfully
+end-to-end, so both former #1 priorities are done.
+
+1. Get a long-lived IAM user access key set up for Jenkins' S3 presigning,
+   so the signed URL actually holds for the full 7 days (see "Real gaps"
+   above) - AWS/Jenkins admin action.
+2. Configure S3 lifecycle/versioning on `sportsmed-edge-installer-app-bucket`
+   (or whichever bucket is current - confirm) for the 12-month retention
+   requirement.
+3. Get confirmation on ADR-012/ADR-013.
+4. Post the EDG-15 and EDG-16 status updates.
+5. Resolve edge-api's deferred issues (ADR-016) and the newly-found
+   `file_uploads` schema gap before any hospital-facing release.
+6. Test `uninstall.sh` end-to-end (both plain and `--purge-data` paths) and
+   the ADR-017 auto-install prompt on a host without Docker/Compose
+   pre-installed - neither has been exercised on a real host yet.
 
 ---
 
