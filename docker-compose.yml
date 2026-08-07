@@ -36,8 +36,10 @@ services:
     networks:
       - edge-net
     healthcheck:
-      # Hits Spring Boot's actuator endpoint directly (EDG-16 AC7).
-      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/actuator/health || exit 1"]
+      # Hits Spring Boot's actuator endpoint directly (EDG-16 AC7). Uses
+      # curl, not wget - wget isn't present in the amazoncorretto:21 base
+      # image (confirmed 2026-08-07).
+      test: ["CMD-SHELL", "curl -f -s http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
