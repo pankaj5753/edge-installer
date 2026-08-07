@@ -210,9 +210,20 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
     schema/migration gap, not a containerization issue. Doesn't appear to
     affect `/actuator/health` (DB connectivity itself is fine), but
     flagging for the edge-api app team.
-  - Not yet re-tested with the curl fix - next step is confirming edge-api
-    goes healthy and edge-ui finally starts, then health-polling all
-    three.
+  - Re-tested 2026-08-07: curl fix confirmed working - edge-api now
+    reports healthy and edge-ui started. edge-ui itself then reported
+    unhealthy, so `wait_for_health` still timed out overall.
+  5. edge-ui's healthcheck (`pgrep -x nginx`) never matched, even though
+     nginx logs proved it was running - nginx rewrites its own process
+     title to `nginx: master process ...` at startup (standard nginx
+     behavior), and Alpine's `pgrep -x` matches against that full
+     rewritten command line, not the short process name, so an exact
+     match against literal `nginx` can never succeed. Container had been
+     unhealthy since creation, not just this run. Fixed: dropped `-x` for
+     a substring match, still a process-level check per EDG-16 AC7's
+     intent.
+  - Not yet re-tested with this fix - next step is confirming all three
+    containers report healthy together for the first time.
 - `release/download-images.sh` / `package-release.sh` / `publish-bundle.sh`
   had never been run for real until 2026-08; issues above found by actual
   execution, not by reading.
