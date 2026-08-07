@@ -4,9 +4,10 @@
 # working tree plus the combined image archive in images/.
 #
 # Bundle contents match EDG-15 AC2 exactly: docker-compose.yml,
-# .env.example, install.sh, uninstall.sh, preflight.sh, images/ (with the
-# combined archive + DIGESTS), an empty certs/, README.md, and the lib/
-# scripts install.sh/uninstall.sh depend on.
+# .env.example, install.sh, uninstall.sh, preflight.sh, check-prereqs.sh
+# (optional, standalone), images/ (with the combined archive + DIGESTS),
+# an empty certs/, README.md, and the lib/ scripts install.sh/uninstall.sh
+# depend on.
 #
 # Usage: ./release/package-release.sh [output-dir]
 set -euo pipefail
@@ -36,8 +37,9 @@ cp "${SCRIPT_DIR}/.env.example" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/install.sh" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/uninstall.sh" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/preflight.sh" "${BUNDLE_ROOT}/"
+cp "${SCRIPT_DIR}/check-prereqs.sh" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/README.md" "${BUNDLE_ROOT}/"
-cp "${SCRIPT_DIR}/lib/common.sh" "${SCRIPT_DIR}/lib/generate-certs.sh" "${SCRIPT_DIR}/lib/health-check.sh" "${SCRIPT_DIR}/lib/install-prereqs.sh" "${BUNDLE_ROOT}/lib/"
+cp "${SCRIPT_DIR}/lib/common.sh" "${SCRIPT_DIR}/lib/generate-certs.sh" "${SCRIPT_DIR}/lib/health-check.sh" "${BUNDLE_ROOT}/lib/"
 cp "${ARCHIVE}" "${BUNDLE_ROOT}/images/"
 cp "${IMAGES_DIR}/DIGESTS" "${BUNDLE_ROOT}/images/"
 chmod +x "${BUNDLE_ROOT}"/*.sh "${BUNDLE_ROOT}"/lib/*.sh

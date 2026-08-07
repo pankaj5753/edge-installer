@@ -354,25 +354,27 @@ any hospital-facing release.
 
 Decision:
 
-`preflight.sh` remains offline-first and fails fast by default (EDG-15
-AC13), but now offers an opt-in exception: when only software
-(Docker Engine, Docker Compose plugin, OpenSSL) is missing - CPU, RAM,
-disk, and OS all pass - and a terminal is attached, the operator is
-interactively prompted to attempt automatic installation via the OS
-package manager (`lib/install-prereqs.sh`, Docker's official apt/dnf repo,
-not the distro's). Declining, or running non-interactively (CI, scripted
-installs), falls back to today's fail-fast behavior unchanged.
+`preflight.sh` and `install.sh` are completely unchanged and remain
+offline-first, fail-fast by default (EDG-15 AC13). Software installation
+is instead offered by `check-prereqs.sh`, a new top-level script that is
+entirely standalone - not called by `install.sh` or `preflight.sh`, and
+they don't call it either. It checks Docker Engine, Docker Compose
+plugin, and OpenSSL independently, and if the operator opts in, installs
+whatever's missing via the OS package manager (Docker's official apt/dnf
+repo, not the distro's). The operator runs it by hand, before
+`install.sh`, only if they choose to and the host has internet access.
 
 Reason:
 
 EDG-15's original assumption was that hospital hosts have no internet
 access during install. Confirmed with the client (via Veera) that this
-isn't always true - some hosts may have internet. Rather than changing
-the default (which would break the offline guarantee for hosts that
-genuinely have none), this adds a narrow, explicit, opt-in path for hosts
-that do, without weakening the strict preflight-and-abort behavior
-everywhere else.
+isn't always true - some hosts may have internet. An earlier version of
+this decision wired the auto-install prompt directly into `preflight.sh`;
+revised to a fully separate script instead, so the core install flow -
+just proven to work end-to-end for the first time - stays untouched by
+this optional convenience feature, and the offline/online paths are
+never entangled in the same file.
 
 Status:
 
-Accepted - 2026-08-07.
+Accepted - 2026-08-07 (revised same day to the standalone-script design).

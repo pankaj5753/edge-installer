@@ -139,11 +139,12 @@ Completed:
 - Bundle layout matching EDG-15 AC2
 - `install.sh` implementing the full EDG-15 AC11 sequence
 - `uninstall.sh` (keeps data by default; `--purge-data` for a full wipe)
-- `preflight.sh` (CPU/RAM/disk/Docker/Compose/OS checks + report), with an
-  opt-in prompt to auto-install missing software when internet is
-  available (ADR-017)
-- Idempotent re-run behavior (AC12), offline-first by default with the
-  ADR-017 opt-in exception (AC13), audit logging (AC16, shared via
+- `preflight.sh` (CPU/RAM/disk/Docker/Compose/OS checks + report) -
+  unchanged, still strictly offline-first/fail-fast (AC13)
+- `check-prereqs.sh` (ADR-017): optional, fully standalone script to
+  check/install missing Docker/Compose/OpenSSL when the host has
+  internet - never called by, and never calls, `install.sh`/`preflight.sh`
+- Idempotent re-run behavior (AC12), audit logging (AC16, shared via
   `lib/common.sh`'s `setup_audit_log`), numbered troubleshooting (AC17)
 - `docker-compose.yml` per EDG-16 (healthchecks, restart policy, log volume)
 - `release/download-images.sh`, `release/package-release.sh`,
@@ -238,15 +239,19 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
 **New capabilities added 2026-08-07, after the first successful install:**
 - `uninstall.sh`: stops/removes the containers, images, and `edge-net`
   network. Keeps DB data, logs, and the TLS cert by default; `--purge-data`
-  does a full, irreversible wipe. Shipped in the bundle now
-  (`package-release.sh` updated to include it and `lib/install-prereqs.sh`).
-- Opt-in automatic prerequisite installation (ADR-017): `preflight.sh` now
-  offers to install missing Docker/Compose/OpenSSL via the OS package
-  manager when the only failures are software (not CPU/RAM/disk/OS) and a
-  terminal is attached - confirmed with the client (via Veera) that
-  hospital hosts may sometimes have internet access, unlike the original
-  EDG-15 AC13 assumption. Declining or running non-interactively keeps
-  today's strict offline fail-fast behavior. See `lib/install-prereqs.sh`.
+  does a full, irreversible wipe. Shipped in the bundle now.
+- `check-prereqs.sh` (ADR-017): optional, standalone top-level script -
+  not called by, and doesn't call, `install.sh` or `preflight.sh` - that
+  checks for Docker/Compose/OpenSSL and offers to install anything
+  missing via the OS package manager, for hosts that have internet
+  access. Confirmed with the client (via Veera) that hospital hosts may
+  sometimes have internet, unlike the original EDG-15 AC13 assumption.
+  Run by hand, before `install.sh`, only if the operator chooses to;
+  `install.sh`/`preflight.sh` are completely unmodified by this feature
+  and keep their strict offline fail-fast behavior regardless. (First
+  version of this wired the prompt directly into `preflight.sh`; revised
+  same-day to a fully separate script so the just-proven install flow
+  stays untouched.)
 
 **Real gaps against EDG-15 ACs:**
 - **12-month prior-version retention (AC5)**: needs S3 versioning/lifecycle
@@ -306,8 +311,8 @@ end-to-end, so both former #1 priorities are done.
 5. Resolve edge-api's deferred issues (ADR-016) and the newly-found
    `file_uploads` schema gap before any hospital-facing release.
 6. Test `uninstall.sh` end-to-end (both plain and `--purge-data` paths) and
-   the ADR-017 auto-install prompt on a host without Docker/Compose
-   pre-installed - neither has been exercised on a real host yet.
+   `check-prereqs.sh` on a host without Docker/Compose pre-installed -
+   neither has been exercised on a real host yet.
 
 ---
 

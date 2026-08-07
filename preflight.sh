@@ -58,91 +58,39 @@ else
 fi
 
 # --- Docker Engine >= 24 ------------------------------------------------
-check_docker_engine() {
-    if command -v docker > /dev/null 2>&1 && DOCKER_VERSION="$(docker version --format '{{.Server.Version}}' 2>/dev/null)" && [[ -n "${DOCKER_VERSION}" ]]; then
-        if version_ge "${DOCKER_VERSION}" "24.0.0"; then
-            record PASS "Docker Engine: ${DOCKER_VERSION} (>= 24 required)"
-            return 0
-        fi
+if command -v docker > /dev/null 2>&1 && DOCKER_VERSION="$(docker version --format '{{.Server.Version}}' 2>/dev/null)" && [[ -n "${DOCKER_VERSION}" ]]; then
+    if version_ge "${DOCKER_VERSION}" "24.0.0"; then
+        record PASS "Docker Engine: ${DOCKER_VERSION} (>= 24 required)"
+    else
         record FAIL "Docker Engine: ${DOCKER_VERSION} (>= 24 required)" "Upgrade Docker Engine: https://docs.docker.com/engine/install/"
-        return 1
     fi
+else
     record FAIL "Docker Engine installed and reachable" "Install Docker Engine >= 24: https://docs.docker.com/engine/install/"
-    return 1
-}
+fi
 
 # --- Docker Compose >= 2.20 ---------------------------------------------
-check_docker_compose() {
-    if COMPOSE_VERSION="$(docker compose version --short 2>/dev/null)" && [[ -n "${COMPOSE_VERSION}" ]]; then
-        if version_ge "${COMPOSE_VERSION}" "2.20.0"; then
-            record PASS "Docker Compose: ${COMPOSE_VERSION} (>= 2.20 required)"
-            return 0
-        fi
+if COMPOSE_VERSION="$(docker compose version --short 2>/dev/null)" && [[ -n "${COMPOSE_VERSION}" ]]; then
+    if version_ge "${COMPOSE_VERSION}" "2.20.0"; then
+        record PASS "Docker Compose: ${COMPOSE_VERSION} (>= 2.20 required)"
+    else
         record FAIL "Docker Compose: ${COMPOSE_VERSION} (>= 2.20 required)" "Upgrade the Docker Compose plugin: https://docs.docker.com/compose/install/"
-        return 1
     fi
+else
     record FAIL "Docker Compose plugin installed" "Install the Docker Compose plugin (v2.20+): https://docs.docker.com/compose/install/"
-    return 1
-}
+fi
 
 # --- OpenSSL --------------------------------------------------------------
-check_openssl() {
-    if command -v openssl > /dev/null 2>&1; then
-        record PASS "OpenSSL installed ($(openssl version))"
-        return 0
-    fi
+if command -v openssl > /dev/null 2>&1; then
+    record PASS "OpenSSL installed ($(openssl version))"
+else
     record FAIL "OpenSSL installed" "Install openssl via your OS package manager."
-    return 1
-}
-
-DOCKER_OK=1;  check_docker_engine  || DOCKER_OK=0
-COMPOSE_OK=1; check_docker_compose || COMPOSE_OK=0
-OPENSSL_OK=1; check_openssl        || OPENSSL_OK=0
+fi
 
 # --- Supported OS (EDG-15 AC5) --------------------------------------------
 if os_supported; then
     record PASS "OS supported: $(os_pretty_name)"
 else
     record FAIL "OS supported: $(os_pretty_name)" "Supported OSes: Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, RHEL 8, RHEL 9."
-fi
-
-# --- Offer automatic installation of missing software (opt-in) -----------
-# EDG-15 assumes no internet access during install (AC13), but the host
-# may sometimes have it - only offered when every non-installable check
-# (CPU/RAM/disk/OS) passed, at least one of Docker/Compose/OpenSSL is
-# missing, and a terminal is attached (never in unattended/CI runs, which
-# keep today's fail-fast behavior unchanged).
-RESOURCES_OK=0
-if [[ "${CPU_COUNT}" -ge 4 && "${RAM_KB}" -ge 8388608 && "${AVAIL_KB}" -ge 104857600 ]] && os_supported; then
-    RESOURCES_OK=1
-fi
-
-if [[ "${FAILED}" -ne 0 && "${RESOURCES_OK}" -eq 1 ]] \
-   && { [[ "${DOCKER_OK}" -eq 0 ]] || [[ "${COMPOSE_OK}" -eq 0 ]] || [[ "${OPENSSL_OK}" -eq 0 ]]; } \
-   && [[ -t 0 ]]; then
-    log ""
-    log "Some required software is missing but can potentially be installed automatically."
-    log "This requires internet access on this host and will use sudo."
-    read -r -p "Attempt automatic installation now? [y/N] " AUTO_INSTALL_REPLY
-    if [[ "${AUTO_INSTALL_REPLY}" =~ ^[Yy] ]]; then
-        INSTALL_ARGS=()
-        [[ "${DOCKER_OK}" -eq 0 ]]  && INSTALL_ARGS+=("--docker")
-        [[ "${COMPOSE_OK}" -eq 0 ]] && INSTALL_ARGS+=("--compose")
-        [[ "${OPENSSL_OK}" -eq 0 ]] && INSTALL_ARGS+=("--openssl")
-        if "${SCRIPT_DIR}/lib/install-prereqs.sh" "${INSTALL_ARGS[@]}"; then
-            log ""
-            log "Re-checking after automatic installation..."
-            printf '\nRetry after automatic installation:\n' >> "${REPORT}"
-            FAILED=0
-            check_docker_engine  || FAILED=1
-            check_docker_compose || FAILED=1
-            check_openssl        || FAILED=1
-        else
-            warn "Automatic installation failed - see output above."
-        fi
-    else
-        log "Skipping automatic installation."
-    fi
 fi
 
 {

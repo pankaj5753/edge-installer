@@ -25,12 +25,13 @@ edge-installer/
 ├── install.sh               # main entry point - EDG-15 AC11 sequence, aborts on first failure
 ├── uninstall.sh               # stops/removes containers+images; --purge-data for a full wipe
 ├── preflight.sh                # CPU/RAM/disk/Docker/Compose/OS checks -> preflight-report.txt
+├── check-prereqs.sh             # OPTIONAL, standalone - checks/installs Docker/Compose/OpenSSL
+│                                  (ADR-017); entirely separate from install.sh/preflight.sh
 ├── docker-compose.yml         # 3-service stack (EDG-16 AC4, AC7, AC8, AC10)
 ├── .env.example                # config template; install.sh copies this to .env (mode 600)
 ├── lib/
 │   ├── common.sh                # shared shell helpers (env, digests, health polling, audit log)
 │   ├── generate-certs.sh         # self-signed TLS cert for edge-ui (called by install.sh)
-│   ├── install-prereqs.sh         # opt-in auto-install of missing Docker/Compose/OpenSSL
 │   └── health-check.sh            # on-demand health snapshot (not used by install.sh's own poll)
 ├── certs/                    # ships empty; install.sh writes edge.crt/edge.key here (mode 600)
 ├── images/                   # combined image archive + digest manifest (see images/README.md)
@@ -53,6 +54,12 @@ sha256sum edge-install-{semver}-linux-x64.tar.gz
 # Step 2: extract and install
 tar xzf edge-install-{semver}-linux-x64.tar.gz -C /opt/edge-agent/ --strip-components=1
 cd /opt/edge-agent
+
+# Optional (ADR-017): if this host has internet access and you're not sure
+# it already has Docker/Compose/OpenSSL, run this first - it's entirely
+# separate from install.sh/preflight.sh and only checks/installs software.
+sudo ./check-prereqs.sh
+
 sudo ./install.sh
 ```
 
@@ -61,10 +68,9 @@ sudo ./install.sh
 1. Preflight checks (CPU >= 4 cores, RAM >= 8GB, disk >= 100GB, Docker
    Engine >= 24, Docker Compose >= 2.20, OpenSSL present, OS in the
    supported list) — writes `preflight-report.txt` with remediation hints
-   for any failures. If only software (Docker/Compose/OpenSSL) is missing
-   and the host has internet access, you'll be prompted to attempt
-   automatic installation (ADR-017) — declining or running non-interactively
-   falls back to today's fail-fast behavior.
+   for any failures and aborts. This step is unchanged and unaffected by
+   `check-prereqs.sh` above - run that first if you want software gaps
+   handled automatically; otherwise fix them manually per the report.
 2. `docker load`s `images/edge-images-{semver}.tar.gz` and verifies each
    loaded image's digest against `images/DIGESTS` — aborts on mismatch.
 3. Prompts for the static LAN IP and bind port (first run only) and writes
@@ -174,11 +180,11 @@ section directly.
     (shown above the failure message). Re-run `./install.sh`; if it
     persists, verify `openssl version` is 1.1.1 or newer and that
     `certs/` is writable.
-11. **Automatic software installation failed** — the host may not have
-    internet access, or its package manager needs attention (proxy config,
-    locked apt/dnf, etc.). Falls back to manual installation per
-    Troubleshooting #1/#2 either way; the offline path always works
-    regardless of this failing.
+11. **`check-prereqs.sh` failed** — the host may not have internet access,
+    or its package manager needs attention (proxy config, locked apt/dnf,
+    etc.). This script is entirely optional; install Docker/Compose/OpenSSL
+    manually per Troubleshooting #1/#2 instead and proceed straight to
+    `./install.sh`.
 
 ## Building a release bundle (dev/release engineer, not hospital IT)
 
