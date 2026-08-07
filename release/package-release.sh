@@ -1,13 +1,5 @@
 #!/usr/bin/env bash
 # Dev-side release tool: builds the offline installer bundle
-# (edge-install-{semver}-linux-x64.tar.gz, EDG-15 AC1-3) from the current
-# working tree plus the combined image archive in images/.
-#
-# Bundle contents match EDG-15 AC2 exactly: docker-compose.yml,
-# .env.example, install.sh, preflight.sh, images/ (with the combined
-# archive + DIGESTS), an empty certs/, README.md, and the lib/ scripts
-# install.sh depends on.
-#
 # Usage: ./release/package-release.sh [output-dir]
 set -euo pipefail
 
@@ -34,7 +26,9 @@ cp "${SCRIPT_DIR}/VERSION" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/docker-compose.yml" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/.env.example" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/install.sh" "${BUNDLE_ROOT}/"
+cp "${SCRIPT_DIR}/uninstall.sh" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/preflight.sh" "${BUNDLE_ROOT}/"
+cp "${SCRIPT_DIR}/check-prereqs.sh" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/README.md" "${BUNDLE_ROOT}/"
 cp "${SCRIPT_DIR}/lib/common.sh" "${SCRIPT_DIR}/lib/generate-certs.sh" "${SCRIPT_DIR}/lib/health-check.sh" "${BUNDLE_ROOT}/lib/"
 cp "${ARCHIVE}" "${BUNDLE_ROOT}/images/"
