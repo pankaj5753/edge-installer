@@ -63,7 +63,11 @@ services:
       - edge-net
     healthcheck:
       # Process-level check (EDG-16 AC7: "Nginx checks its own process").
-      test: ["CMD-SHELL", "pgrep -x nginx > /dev/null || exit 1"]
+      # No -x (exact match) - nginx rewrites its own process title to
+      # "nginx: master process ..." at runtime, so an exact-match check
+      # against "nginx" never matches even though it's running fine
+      # (confirmed 2026-08-07).
+      test: ["CMD-SHELL", "pgrep nginx > /dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
