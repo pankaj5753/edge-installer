@@ -178,8 +178,23 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
      archive file itself (`verify_archive_checksum` in `lib/common.sh`),
      checked before `docker load` runs - a file checksum has nothing to
      do with Docker and is identical on every host by construction.
-  - Not yet re-tested end-to-end with a freshly-built bundle since these
-    fixes landed - still the highest-value next step.
+  3. Certificate generation failed silently (no error text at all) right
+     after image loading, on Ubuntu 24.04, 2026-08-06. Root cause:
+     `lib/generate-certs.sh`'s hardcoded `-subj` string contains the
+     literal org name `Smith+Nephew`, and openssl's subject-string parser
+     treats an unescaped `+` as a multi-value-RDN separator (RFC 2253) -
+     `openssl req` failed with `Missing '=' after RDN type string 'Nephew
+     Edge Agent'`, but the failure was invisible because the command
+     redirected all output (including the error) to `/dev/null`. Fixed:
+     escaped the `+` (`Smith\+Nephew`), and replaced the blind
+     `> /dev/null 2>&1` with output capture that's only printed - via
+     `die()` - on actual failure, so future openssl errors are visible
+     instead of silent (README Troubleshooting #10).
+  - Progress: install.sh now reaches certificate generation for the first
+    time ever. Not yet past it - re-test pending confirmation the fix
+    works on the real EC2 host, then continue through DB password
+    generation, `docker compose up -d`, and health polling, none of which
+    have been reached yet.
 - `release/download-images.sh` / `package-release.sh` / `publish-bundle.sh`
   had never been run for real until 2026-08; issues above found by actual
   execution, not by reading.
