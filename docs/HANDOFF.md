@@ -190,11 +190,29 @@ Cross-checked against EDG-15's acceptance criteria, 2026-07-30.
      `> /dev/null 2>&1` with output capture that's only printed - via
      `die()` - on actual failure, so future openssl errors are visible
      instead of silent (README Troubleshooting #10).
-  - Progress: install.sh now reaches certificate generation for the first
-    time ever. Not yet past it - re-test pending confirmation the fix
-    works on the real EC2 host, then continue through DB password
-    generation, `docker compose up -d`, and health polling, none of which
-    have been reached yet.
+  - Progress: install.sh got all the way through `docker compose up -d`
+    for the first time, 2026-08-07. All three containers attempted;
+    edge-db came up healthy, edge-api came up running but reported
+    "unhealthy," and edge-ui was never created at all.
+  4. edge-api's `docker-compose.yml` healthcheck used `wget --spider`, but
+     `wget` isn't present in the `amazoncorretto:21` base image (confirmed
+     via `docker exec` - `which`/`wget` both missing; `curl` and `bash`
+     are). The healthcheck was failing on a missing binary, not on actual
+     app health - Spring Boot had fully started, connected to `edge-db`,
+     and was serving on 8080. Because `edge-ui`'s compose service has
+     `depends_on: edge-api: condition: service_healthy`, this alone was
+     enough to block edge-ui from ever starting. Fixed: healthcheck now
+     uses `curl -f`, confirmed present in the image.
+  - Separately, and NOT fixed here (application-level, edge-api's own
+    scope per the standing agreement to defer edge-api internals):
+    edge-api's logs show repeating `Table 'edge_agent.file_uploads'
+    doesn't exist` errors from two `@Scheduled` jobs - a DB
+    schema/migration gap, not a containerization issue. Doesn't appear to
+    affect `/actuator/health` (DB connectivity itself is fine), but
+    flagging for the edge-api app team.
+  - Not yet re-tested with the curl fix - next step is confirming edge-api
+    goes healthy and edge-ui finally starts, then health-polling all
+    three.
 - `release/download-images.sh` / `package-release.sh` / `publish-bundle.sh`
   had never been run for real until 2026-08; issues above found by actual
   execution, not by reading.
