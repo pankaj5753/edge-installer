@@ -2,15 +2,15 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'UI_TAG', defaultValue: '1.0.0', description: 'edge-ui image tag to bundle')
-        string(name: 'API_TAG', defaultValue: '1.0.0', description: 'edge-api image tag to bundle')
-        string(name: 'DB_TAG', defaultValue: '1.0.0', description: 'edge-db image tag to bundle')
+        string(name: 'UI_TAG', defaultValue: 'v01.01.00', description: 'edge-ui image tag to bundle')
+        string(name: 'API_TAG', defaultValue: 'v01.01.00', description: 'edge-api image tag to bundle')
+        string(name: 'DB_TAG', defaultValue: 'v01.01.00', description: 'edge-db image tag to bundle')
     }
 
     environment {
         AWS_REGION     = "us-east-2"
         AWS_ACCOUNT_ID = "427479402536"
-        S3_BUCKET      = "bridge-dev1-bucket-edge-web-portal"
+        S3_BUCKET      = "bridge-dev1-bucket-edge-app"
     }
 
     options {
