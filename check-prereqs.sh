@@ -90,5 +90,16 @@ case "${ID}" in
         ;;
 esac
 
+REQUIRE_RELOGIN=0
+if [[ "${NEED_DOCKER}" -eq 1 ]] && ! id -nG "${USER}" | grep -qw docker; then
+    log "Adding ${USER} to the docker group so Docker can be used without sudo..."
+    sudo usermod -aG docker "${USER}"
+    REQUIRE_RELOGIN=1
+fi
+
 log ""
-log "Done. Run ./install.sh next."
+if [[ "${REQUIRE_RELOGIN}" -eq 1 ]]; then
+    log "Done. Log out and back in (or run 'newgrp docker') so the docker group membership takes effect, then run ./install.sh."
+else
+    log "Done. Run ./install.sh next."
+fi
