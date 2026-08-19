@@ -128,8 +128,8 @@ section directly.
    `preflight-report.txt` for the detected version; upgrade per
    https://docs.docker.com/engine/install/ /
    https://docs.docker.com/compose/install/.
-3. **Unsupported OS** — only Ubuntu 22.04/24.04 LTS and RHEL 8/9 x86_64
-   are supported; Windows is out of scope (separate future story).
+3. **Unsupported OS** — only Ubuntu 22.04/24.04/26.04 LTS and RHEL 8/9
+   x86_64 are supported; Windows is out of scope (separate future story).
 4. **Insufficient CPU / RAM / disk** — see `preflight-report.txt` for the
    detected values and required minimums; provision a larger host or free
    up disk space.

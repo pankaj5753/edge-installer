@@ -90,7 +90,7 @@ fi
 if os_supported; then
     record PASS "OS supported: $(os_pretty_name)"
 else
-    record FAIL "OS supported: $(os_pretty_name)" "Supported OSes: Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, RHEL 8, RHEL 9."
+    record FAIL "OS supported: $(os_pretty_name)" "Supported OSes: Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, Ubuntu 26.04 LTS, RHEL 8, RHEL 9."
 fi
 
 {

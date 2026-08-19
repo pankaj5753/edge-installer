@@ -6,6 +6,12 @@ per ADR-008 / EDG-15 AC5 (semantic versioning).
 
 ## [Unreleased]
 
+### Added
+
+- `preflight.sh` and `check-prereqs.sh` now accept **Ubuntu 26.04 LTS** as a
+  supported OS, alongside the existing Ubuntu 22.04/24.04 LTS and RHEL 8/9
+  (EDG-15 AC5).
+
 ### Changed (revised against EDG-15 and EDG-16 acceptance criteria)
 
 - Bundle now loads a **single combined, gzipped image archive**

@@ -51,13 +51,13 @@ os_pretty_name() {
     fi
 }
 
-# Supported OSes per EDG-15 AC5: Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, RHEL 8, RHEL 9.
+# Supported OSes per EDG-15 AC5: Ubuntu 22.04/24.04/26.04 LTS, RHEL 8, RHEL 9.
 os_supported() {
     [[ -f /etc/os-release ]] || return 1
     # shellcheck disable=SC1091
     source /etc/os-release
     case "${ID}" in
-        ubuntu) [[ "${VERSION_ID}" == "22.04" || "${VERSION_ID}" == "24.04" ]] ;;
+        ubuntu) [[ "${VERSION_ID}" == "22.04" || "${VERSION_ID}" == "24.04" || "${VERSION_ID}" == "26.04" ]] ;;
         rhel)   [[ "${VERSION_ID}" == 8* || "${VERSION_ID}" == 9* ]] ;;
         *)      return 1 ;;
     esac
