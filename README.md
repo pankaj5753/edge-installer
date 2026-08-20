@@ -4,8 +4,8 @@ Offline installer for the Smith+Nephew Edge Agent Platform (EDG-15),
 packaging the three-container stack defined in EDG-16:
 
 ```text
-edge-ui   (Nginx + Angular, TLS)   :443 external
-edge-api  (Spring Boot)            :8080 internal
+edge-ui   (Nginx + Angular, TLS)   :80 external (redirect), :443 external
+edge-api  (Spring Boot, TLS)       :443 internal
 edge-db   (MySQL 8)                :3306 internal
 ```
 
@@ -66,7 +66,12 @@ sudo ./install.sh
    them to `.env`.
 4. Generates a self-signed TLS certificate (`certs/edge.crt`,
    `certs/edge.key`, mode 600, CN/SAN = the configured IP, 825-day
-   validity, 2048-bit RSA) if one doesn't already exist.
+   validity, 2048-bit RSA) if one doesn't already exist. Also generates
+   `certs/keystore.p12` (mode 644 - readable by edge-api's non-root
+   container user), a separate self-signed keystore edge-api uses to serve
+   HTTPS on its internal, container-to-container-only listener - nginx
+   proxies to it with certificate verification off, so this keystore is
+   never identity-checked, unlike `edge.crt` above.
 5. Prints the certificate's SHA-256 fingerprint for first-connection trust
    verification.
 6. Generates random database passwords into `.env` (mode 600) if not
@@ -80,9 +85,10 @@ sudo ./install.sh
 9. Prints `https://<configured-ip>/setup`.
 
 **Idempotent**: re-running `install.sh` reloads images (a no-op if
-digests are unchanged) but does **not** regenerate the TLS cert, database
-passwords, or prompt again for IP/port. To force regeneration, remove the
-relevant files first (`certs/edge.crt` + `certs/edge.key` for the cert;
+digests are unchanged) but does **not** regenerate the TLS cert, the
+edge-api keystore, database passwords, or prompt again for IP/port. To
+force regeneration, remove the relevant files first (`certs/edge.crt` +
+`certs/edge.key` for the cert, `certs/keystore.p12` for the keystore;
 clear the password lines in `.env` for credentials) — see
 `lib/generate-certs.sh --force`.
 
@@ -151,10 +157,12 @@ section directly.
 9. **Bundle checksum mismatch (Step 1, before extraction)** — do not
    extract the bundle. Contact your S+N representative; do not attempt to
    proceed with a bundle that fails checksum verification.
-10. **Certificate generation failed** — `openssl req` printed an error
-    (shown above the failure message). Re-run `./install.sh`; if it
-    persists, verify `openssl version` is 1.1.1 or newer and that
-    `certs/` is writable.
+10. **Certificate generation failed** — `openssl req` or `openssl pkcs12`
+    printed an error (shown above the failure message). Re-run
+    `./install.sh`; if it persists, verify `openssl version` is 1.1.1 or
+    newer and that `certs/` is writable. This covers both `certs/edge.crt`
+    (nginx's public-facing cert) and `certs/keystore.p12` (edge-api's
+    internal keystore).
 
 ## Building a release bundle (dev/release engineer, not hospital IT)
 

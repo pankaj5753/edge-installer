@@ -24,11 +24,16 @@ services:
     container_name: edge-api
     restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://edge-db:3306/${EDGE_DB_NAME}
-      SPRING_DATASOURCE_USERNAME: ${EDGE_DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${EDGE_DB_PASSWORD}
+      # application.yml binds datasource.* to these custom names (DB_URL/
+      # DB_USERNAME/DB_PASSWORD), not Spring's standard SPRING_DATASOURCE_*
+      # - and its entrypoint preserves these across sourcing .env.qa so the
+      # local edge-db is used instead of .env.qa's QA cloud database.
+      DB_URL: jdbc:mysql://edge-db:3306/${EDGE_DB_NAME}
+      DB_USERNAME: ${EDGE_DB_USER}
+      DB_PASSWORD: ${EDGE_DB_PASSWORD}
       LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
     volumes:
+      - ./certs/keystore.p12:/etc/edge-api/keystore.p12:ro
       - edge-logs:/var/log/edge-snn
     depends_on:
       edge-db:
@@ -36,8 +41,9 @@ services:
     networks:
       - edge-net
     healthcheck:
-      # Hits Spring Boot's actuator endpoint directly (EDG-16 AC7).
-      test: ["CMD-SHELL", "curl -f -s http://localhost:8080/actuator/health || exit 1"]
+      # edge-api serves HTTPS on 443 via the mounted keystore (application.yml
+      # server.ssl.*); hits its own /api/health, not generic actuator (EDG-16 AC7).
+      test: ["CMD-SHELL", "curl -fk -s https://localhost:443/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -48,6 +54,7 @@ services:
     container_name: edge-ui
     restart: unless-stopped
     ports:
+      - "80:80"
       - "${BIND_PORT:-443}:443"
     volumes:
       - ./certs:/etc/nginx/certs:ro

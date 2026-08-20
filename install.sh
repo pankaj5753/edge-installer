@@ -51,7 +51,8 @@ if [[ -z "${BIND_PORT:-}" ]]; then
 fi
 export STATIC_IP BIND_PORT
 
-# --- 4/5. TLS certificate + fingerprint (idempotent, EDG-15 AC12) ----------
+# --- 4/5. TLS certificate + fingerprint, plus edge-api's internal keystore
+# (idempotent, EDG-15 AC12) --------------------------------------------------
 "${SCRIPT_DIR}/lib/generate-certs.sh" --cn "${STATIC_IP}"
 FINGERPRINT="$(openssl x509 -in "${CERTS_DIR}/edge.crt" -noout -fingerprint -sha256 | cut -d= -f2)"
 log "Certificate SHA-256 fingerprint (record for first-connection trust verification):"

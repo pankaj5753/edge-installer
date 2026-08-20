@@ -11,6 +11,21 @@ per ADR-008 / EDG-15 AC5 (semantic versioning).
 - `preflight.sh` and `check-prereqs.sh` now accept **Ubuntu 26.04 LTS** as a
   supported OS, alongside the existing Ubuntu 22.04/24.04 LTS and RHEL 8/9
   (EDG-15 AC5).
+- `lib/generate-certs.sh` now also generates `certs/keystore.p12`, a
+  self-signed PKCS12 keystore edge-api uses to serve HTTPS on its internal,
+  container-to-container-only listener (`application.yml`'s
+  `server.ssl.*`), mounted read-only into the container at
+  `/etc/edge-api/keystore.p12`. Idempotent alongside `edge.crt`/`edge.key`.
+  edge-api's healthcheck in `docker-compose.yml` now hits
+  `https://localhost:443/api/health` instead of the previous plain-HTTP
+  actuator endpoint.
+- Fixed `docker-compose.yml` setting the wrong env var names for edge-api's
+  database connection (`SPRING_DATASOURCE_*`, which `application.yml`
+  never reads) - now sets `DB_URL`/`DB_USERNAME`/`DB_PASSWORD`, the names
+  it actually binds to, so the container connects to the local `edge-db`
+  rather than falling through to whatever `.env.qa` bakes in.
+- `edge-ui` now also publishes port 80 (`docker-compose.yml` and nginx)
+  for the plain-HTTP-to-HTTPS redirect, alongside the existing 443.
 
 ### Changed (revised against EDG-15 and EDG-16 acceptance criteria)
 
