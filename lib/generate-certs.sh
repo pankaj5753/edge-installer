@@ -27,28 +27,28 @@ mkdir -p "${CERTS_DIR}"
 
 if [[ -f "${CERTS_DIR}/edge.crt" && -f "${CERTS_DIR}/edge.key" && "${FORCE}" -eq 0 ]]; then
     log "certs/edge.crt and certs/edge.key already exist - skipping (use --force to regenerate)"
-    exit 0
+else
+    log "Generating self-signed certificate for CN/SAN=${CN}"
+
+    # "+" in the -subj value must be escaped - openssl's subject-string
+    # parser treats an unescaped "+" as a multi-value-RDN separator
+    # (RFC 2253), which silently breaks on the literal "Smith+Nephew"
+    # organization name.
+    if ! OPENSSL_OUTPUT="$(openssl req -x509 -nodes -newkey rsa:2048 \
+        -keyout "${CERTS_DIR}/edge.key" \
+        -out "${CERTS_DIR}/edge.crt" \
+        -days 825 \
+        -subj "/CN=${CN}/O=Smith\+Nephew Edge Agent" \
+        -addext "subjectAltName=IP:${CN}" 2>&1)"; then
+        warn "${OPENSSL_OUTPUT}"
+        die "Certificate generation failed. See README.md Troubleshooting #10."
+    fi
+
+    chmod 600 "${CERTS_DIR}/edge.crt" "${CERTS_DIR}/edge.key"
+
+    log "Wrote certs/edge.crt and certs/edge.key (mode 600)"
+    log "NOTE: self-signed - IT verifies the printed fingerprint on first connection (EDG-15 AC11/AC14)."
 fi
-
-log "Generating self-signed certificate for CN/SAN=${CN}"
-
-# "+" in the -subj value must be escaped - openssl's subject-string parser
-# treats an unescaped "+" as a multi-value-RDN separator (RFC 2253), which
-# silently breaks on the literal "Smith+Nephew" organization name.
-if ! OPENSSL_OUTPUT="$(openssl req -x509 -nodes -newkey rsa:2048 \
-    -keyout "${CERTS_DIR}/edge.key" \
-    -out "${CERTS_DIR}/edge.crt" \
-    -days 825 \
-    -subj "/CN=${CN}/O=Smith\+Nephew Edge Agent" \
-    -addext "subjectAltName=IP:${CN}" 2>&1)"; then
-    warn "${OPENSSL_OUTPUT}"
-    die "Certificate generation failed. See README.md Troubleshooting #10."
-fi
-
-chmod 600 "${CERTS_DIR}/edge.crt" "${CERTS_DIR}/edge.key"
-
-log "Wrote certs/edge.crt and certs/edge.key (mode 600)"
-log "NOTE: self-signed - IT verifies the printed fingerprint on first connection (EDG-15 AC11/AC14)."
 
 # --- edge-api internal keystore (container-to-container only) -------------
 # Nginx proxies to edge-api over HTTPS but with proxy_ssl_verify off - this

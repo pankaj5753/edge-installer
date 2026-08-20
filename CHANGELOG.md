@@ -35,6 +35,18 @@ per ADR-008 / EDG-15 AC5 (semantic versioning).
   stale tags pointed `docker-compose.yml` at whatever was already cached
   locally instead of the newly-loaded images.
 
+### Fixed
+
+- `lib/generate-certs.sh` exited immediately after logging "certs/edge.crt
+  and certs/edge.key already exist - skipping", before ever reaching the
+  `keystore.p12` generation block added below it - so on any host that
+  already had `edge.crt`/`edge.key` from a prior install, `keystore.p12`
+  was never created. Docker's bind mount then silently created an empty
+  *directory* at that path instead of failing, which edge-api's Spring
+  Boot then tried to parse as a PKCS12 keystore (`Tag number over 30 is
+  not supported`), crash-looping. The pre-existing-cert branch no longer
+  exits early - it now falls through to the keystore check either way.
+
 ### Changed (revised against EDG-15 and EDG-16 acceptance criteria)
 
 - Bundle now loads a **single combined, gzipped image archive**
