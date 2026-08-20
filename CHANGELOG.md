@@ -26,6 +26,14 @@ per ADR-008 / EDG-15 AC5 (semantic versioning).
   rather than falling through to whatever `.env.qa` bakes in.
 - `edge-ui` now also publishes port 80 (`docker-compose.yml` and nginx)
   for the plain-HTTP-to-HTTPS redirect, alongside the existing 443.
+- `install.sh` now force-syncs `UI_IMAGE_TAG`/`API_IMAGE_TAG`/
+  `DB_IMAGE_TAG` from the bundle's `.env.example` into `.env` on every
+  run, via the new `sync_image_tags` helper in `lib/common.sh`. Previously
+  these were only written once (on first `.env` creation) and never
+  refreshed, so re-running `install.sh` with a newer bundle over an
+  already-installed host silently kept running the old images - `.env`'s
+  stale tags pointed `docker-compose.yml` at whatever was already cached
+  locally instead of the newly-loaded images.
 
 ### Changed (revised against EDG-15 and EDG-16 acceptance criteria)
 

@@ -28,6 +28,12 @@ log "==================================================================="
 
 load_env
 
+# --- 0. Sync release-pinned image tags from this bundle's .env.example -----
+# (always refreshed, unlike the network/DB values below - see
+# sync_image_tags in lib/common.sh)
+sync_image_tags
+load_env
+
 # --- 1. Preflight (writes preflight-report.txt, aborts on failure) --------
 "${SCRIPT_DIR}/preflight.sh"
 

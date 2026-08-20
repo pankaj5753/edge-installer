@@ -56,15 +56,21 @@ sudo ./install.sh
 
 `install.sh` runs this sequence, aborting on first failure (EDG-15 AC11):
 
-1. Preflight checks (CPU >= 4 cores, RAM >= 8GB, disk >= 100GB, Docker
+1. Syncs `UI_IMAGE_TAG`/`API_IMAGE_TAG`/`DB_IMAGE_TAG` from this bundle's
+   `.env.example` into `.env`, always overwriting whatever was there
+   before — these are pinned by whichever bundle you're currently
+   installing, not a persisted host choice, so a re-run with a newer
+   bundle always picks up its images instead of silently keeping the
+   previous version running.
+2. Preflight checks (CPU >= 4 cores, RAM >= 8GB, disk >= 100GB, Docker
    Engine >= 24, Docker Compose >= 2.20, OpenSSL present, OS in the
    supported list) — writes `preflight-report.txt` with remediation hints
    for any failures.
-2. `docker load`s `images/edge-images-{semver}.tar.gz` and verifies each
+3. `docker load`s `images/edge-images-{semver}.tar.gz` and verifies each
    loaded image's digest against `images/DIGESTS` — aborts on mismatch.
-3. Prompts for the static LAN IP and bind port (first run only) and writes
+4. Prompts for the static LAN IP and bind port (first run only) and writes
    them to `.env`.
-4. Generates a self-signed TLS certificate (`certs/edge.crt`,
+5. Generates a self-signed TLS certificate (`certs/edge.crt`,
    `certs/edge.key`, mode 600, CN/SAN = the configured IP, 825-day
    validity, 2048-bit RSA) if one doesn't already exist. Also generates
    `certs/keystore.p12` (mode 644 - readable by edge-api's non-root
@@ -72,21 +78,23 @@ sudo ./install.sh
    HTTPS on its internal, container-to-container-only listener - nginx
    proxies to it with certificate verification off, so this keystore is
    never identity-checked, unlike `edge.crt` above.
-5. Prints the certificate's SHA-256 fingerprint for first-connection trust
+6. Prints the certificate's SHA-256 fingerprint for first-connection trust
    verification.
-6. Generates random database passwords into `.env` (mode 600) if not
+7. Generates random database passwords into `.env` (mode 600) if not
    already set. This is the internal MySQL connection password only —
    distinct from hospital/cloud-facility credentials, which are entered
    later via the Cloud Configuration screen and never stored here
    (EDG-16 AC6).
-7. `docker compose up -d`. No outbound pulls occur — images are already
+8. `docker compose up -d`. No outbound pulls occur — images are already
    loaded locally (EDG-15 AC13).
-8. Polls container health for up to 2 minutes; all three must be healthy.
-9. Prints `https://<configured-ip>/setup`.
+9. Polls container health for up to 2 minutes; all three must be healthy.
+10. Prints `https://<configured-ip>/setup`.
 
 **Idempotent**: re-running `install.sh` reloads images (a no-op if
-digests are unchanged) but does **not** regenerate the TLS cert, the
-edge-api keystore, database passwords, or prompt again for IP/port. To
+digests are unchanged) and always refreshes the image tags in `.env` to
+match the bundle you're running, but does **not** regenerate the TLS
+cert, the edge-api keystore, database passwords, or prompt again for
+IP/port. To
 force regeneration, remove the relevant files first (`certs/edge.crt` +
 `certs/edge.key` for the cert, `certs/keystore.p12` for the keystore;
 clear the password lines in `.env` for credentials) — see

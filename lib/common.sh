@@ -37,6 +37,21 @@ set_env_var() {
     fi
 }
 
+# Force-syncs UI_IMAGE_TAG/API_IMAGE_TAG/DB_IMAGE_TAG from this bundle's
+# .env.example into .env on every run. Unlike STATIC_IP/BIND_PORT/DB
+# passwords (set once, then left alone per EDG-15 AC12), image tags are
+# release-pinned by whichever bundle is currently installed, not a
+# persisted host choice - re-running install.sh with a newer bundle must
+# always pick up its images, not silently keep running an older one.
+sync_image_tags() {
+    local key value
+    for key in UI_IMAGE_TAG API_IMAGE_TAG DB_IMAGE_TAG; do
+        value="$(grep "^${key}=" "${SCRIPT_DIR}/.env.example" 2>/dev/null | head -n1 | cut -d= -f2-)"
+        [[ -n "${value}" ]] || die "Missing ${key} in .env.example - bundle is corrupt."
+        set_env_var "${key}" "${value}"
+    done
+}
+
 # version_ge A B --> exit 0 if A >= B (dotted-numeric version compare).
 version_ge() {
     [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1)" == "$1" ]]
