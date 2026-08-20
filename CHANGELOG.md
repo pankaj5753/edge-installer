@@ -49,6 +49,15 @@ per ADR-008 / EDG-15 AC5 (semantic versioning).
 
 ### Changed (revised against EDG-15 and EDG-16 acceptance criteria)
 
+- Rewrote `README.md` for its actual audience: it ships inside the bundle
+  and is read by hospital IT, not engineering. Removed internal ticket/ADR
+  references, release-pipeline instructions, and implementation detail
+  (e.g. the internal edge-api keystore) that a hospital installer doesn't
+  need to know about; kept the numbered Troubleshooting section's meaning
+  and ordering unchanged since `install.sh`/`preflight.sh`/etc. reference
+  those numbers directly. The release-engineer-facing "building a release
+  bundle" instructions moved out of scope for this file entirely (that
+  audience should read `release/*.sh`'s own comments instead).
 - Bundle now loads a **single combined, gzipped image archive**
   (`images/edge-images-{semver}.tar.gz`, `docker save img1 img2 img3 |
   gzip`) instead of separate per-image tarballs, per EDG-15 AC3.
