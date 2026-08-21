@@ -46,6 +46,12 @@ per ADR-008 / EDG-15 AC5 (semantic versioning).
   Boot then tried to parse as a PKCS12 keystore (`Tag number over 30 is
   not supported`), crash-looping. The pre-existing-cert branch no longer
   exits early - it now falls through to the keystore check either way.
+- `lib/generate-certs.sh` now self-heals if `certs/keystore.p12` is a
+  directory instead of a file (the exact artifact the bug above used to
+  leave behind, and which Docker's bind mount creates any time this file
+  is missing when `docker compose up` runs) - it's removed automatically,
+  with a warning, before generation is attempted, instead of failing with
+  an opaque `pkcs12: Can't open ... Is a directory` error.
 
 ### Changed (revised against EDG-15 and EDG-16 acceptance criteria)
 

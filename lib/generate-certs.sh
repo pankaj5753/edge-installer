@@ -56,6 +56,16 @@ fi
 # never identity-checked. CN/SAN are therefore arbitrary, unlike edge.crt
 # above (which IS checked, by IT via the printed fingerprint).
 KEYSTORE="${CERTS_DIR}/keystore.p12"
+
+# If docker-compose ever ran with this file missing, Docker's bind mount
+# (./certs/keystore.p12:/etc/edge-api/keystore.p12) silently creates an
+# empty directory at the source path instead of failing - self-heal that
+# rather than leaving `openssl pkcs12 -export` to fail on it every time.
+if [[ -d "${KEYSTORE}" ]]; then
+    warn "certs/keystore.p12 is a directory, not a file - likely created by Docker on a previous run where this file was missing. Removing it so it can be generated correctly."
+    rm -rf "${KEYSTORE}"
+fi
+
 if [[ -f "${KEYSTORE}" && "${FORCE}" -eq 0 ]]; then
     log "certs/keystore.p12 already exists - skipping (use --force to regenerate)"
 else
