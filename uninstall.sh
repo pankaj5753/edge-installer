@@ -24,7 +24,15 @@ done
 
 command -v docker > /dev/null 2>&1 || die "Docker Engine is required. See README.md Troubleshooting #1."
 
-setup_audit_log
+# --- Audit logging (EDG-15 AC16): everything below is captured -------------
+LOG_DIR="/var/log/edge-agent"
+if mkdir -p "${LOG_DIR}" 2>/dev/null && [[ -w "${LOG_DIR}" ]]; then
+    LOG_FILE="${LOG_DIR}/uninstall.log"
+else
+    LOG_FILE="${SCRIPT_DIR}/uninstall.log"
+    printf '[edge-installer] WARNING: cannot write to %s (run as root/sudo for the audit log required by EDG-15 AC16) - logging to %s instead\n' "${LOG_DIR}" "${LOG_FILE}" >&2
+fi
+exec > >(tee -a "${LOG_FILE}") 2>&1
 
 log "==================================================================="
 log "Edge Agent Platform uninstaller - $(date -u +%Y-%m-%dT%H:%M:%SZ)"
