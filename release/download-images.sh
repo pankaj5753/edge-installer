@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
-# Dev-side release tool: pulls versioned images from ECR (ADR-002) and
-# produces the single combined, gzipped archive install.sh expects
-# (EDG-15 AC3): images/edge-images-{semver}.tar.gz, plus a DIGESTS manifest
-# install.sh uses to verify loaded image integrity (EDG-15 AC11).
+# Dev-side release tool: pulls versioned images from ECR and produces the
+# single combined, gzipped archive install.sh expects: images/hub-images-{semver}.tar.gz,
+# plus a DIGESTS manifest install.sh uses to verify loaded image integrity.
 #
 # Requires AWS credentials and internet access - this is NOT run on the
-# hospital host (ADR-007).
+# hospital host.
 #
-# All three images must exist before a release can be cut (edge-ui is
-# still pending - see images/PLACEHOLDER-edge-ui.md).
+# All three images must exist before a release can be cut (hub-ui is
+# still pending - see images/PLACEHOLDER-hub-ui.md).
 #
 # Usage:
 #   AWS_REGION=us-east-1 AWS_ACCOUNT_ID=123456789012 \
@@ -40,23 +39,23 @@ aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AW
 mkdir -p "${IMAGES_DIR}"
 # Clear any leftover archive/DIGESTS from a prior run so a re-triggered
 # build can never mix stale files with this run's fresh pull.
-rm -f "${IMAGES_DIR}"/edge-images-*.tar.gz "${IMAGES_DIR}/DIGESTS"
+rm -f "${IMAGES_DIR}"/hub-images-*.tar.gz "${IMAGES_DIR}/DIGESTS"
 
 # ECR repository names (include the sandbox/bridge/ org prefix) vs. the
 # short local names docker-compose.yml and install.sh expect once loaded.
 declare -A ECR_REPOS=(
-    [snn-edge-ui]="sandbox/bridge/snn-edge-ui"
-    [snn-edge-api]="sandbox/bridge/snn-edge-api"
-    [snn-edge-db]="sandbox/bridge/snn-edge-db"
+    [snn-hub-ui]="sandbox/bridge/snn-hub-ui"
+    [snn-hub-api]="sandbox/bridge/snn-hub-api"
+    [snn-hub-db]="sandbox/bridge/snn-hub-db"
 )
 declare -A TAGS=(
-    [snn-edge-ui]="${UI_TAG}"
-    [snn-edge-api]="${API_TAG}"
-    [snn-edge-db]="${DB_TAG}"
+    [snn-hub-ui]="${UI_TAG}"
+    [snn-hub-api]="${API_TAG}"
+    [snn-hub-db]="${DB_TAG}"
 )
 
 LOCAL_REFS=()
-for repo in snn-edge-ui snn-edge-api snn-edge-db; do
+for repo in snn-hub-ui snn-hub-api snn-hub-db; do
     tag="${TAGS[${repo}]}"
     remote_ref="${REGISTRY}/${ECR_REPOS[${repo}]}:${tag}"
     local_ref="${repo}:${tag}"
@@ -70,7 +69,7 @@ for repo in snn-edge-ui snn-edge-api snn-edge-db; do
     LOCAL_REFS+=("${local_ref}")
 done
 
-ARCHIVE="${IMAGES_DIR}/edge-images-${SEMVER}.tar.gz"
+ARCHIVE="${IMAGES_DIR}/hub-images-${SEMVER}.tar.gz"
 log "Saving ${LOCAL_REFS[*]} -> $(basename "${ARCHIVE}")"
 docker save "${LOCAL_REFS[@]}" | gzip > "${ARCHIVE}"
 

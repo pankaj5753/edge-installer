@@ -30,13 +30,13 @@ User interface for Hospital IT.
 Technology:
 
 - Angular (Node 20 build, `ng build --configuration=production`)
-- Nginx 1.27 Alpine, two-stage build with Node 20 Alpine (EDG-16 AC1)
+- Nginx 1.27 Alpine, two-stage build with Node 20 Alpine
 - TLS termination (mounted `./certs`)
 - Reverse-proxies `/v1/**` and `/api/**` to edge-api:8080
 
 Image:
 
-`snn-edge-ui`, tag controlled via `UI_IMAGE_TAG` in `.env` (ADR-011)
+`snn-edge-ui`, tag controlled via `UI_IMAGE_TAG` in `.env`
 
 External Port:
 
@@ -45,7 +45,7 @@ External Port:
 Health check:
 
 Process-level check (nginx running), 3 consecutive failures triggers a
-Docker restart (EDG-16 AC7)
+Docker restart
 
 Responsibilities:
 
@@ -60,8 +60,7 @@ Responsibilities:
 
 Purpose:
 
-Application backend. Pure API server, serves no static content
-(EDG-16 AC2).
+Application backend. Pure API server, serves no static content.
 
 Technology:
 
@@ -71,10 +70,9 @@ Technology:
 
 Image:
 
-`snn-edge-api`, tag controlled via `API_IMAGE_TAG` in `.env` (ADR-011).
+`snn-edge-api`, tag controlled via `API_IMAGE_TAG` in `.env`.
 NOTE: current ECR repo is `sandbox/bridge/snn-edge` with image tag
-`snn-edge-api-3` - predates ADR-011, needs reconciling (see
-HANDOFF.md).
+`snn-edge-api-3` - legacy naming convention (see HANDOFF.md).
 
 Port:
 
@@ -83,7 +81,7 @@ Port:
 Health check:
 
 `GET /actuator/health`, 3 consecutive failures triggers a Docker
-restart (EDG-16 AC7)
+restart
 
 Responsibilities:
 
@@ -106,7 +104,7 @@ Technology:
 
 Image:
 
-`snn-edge-db`, tag controlled via `DB_IMAGE_TAG` in `.env` (ADR-011)
+`snn-edge-db`, tag controlled via `DB_IMAGE_TAG` in `.env`
 
 Port:
 
@@ -115,7 +113,6 @@ Port:
 Health check:
 
 `mysqladmin ping`, 3 consecutive failures triggers a Docker restart
-(EDG-16 AC7)
 
 Persistence:
 
@@ -138,7 +135,7 @@ Tables (via `init.sql` on first boot):
 A shared named volume (`edge-logs`) is mounted at `/var/log/edge-snn` in
 both edge-ui and edge-api, for persistent log retention beyond Docker's
 own stdout/stderr capture. Retention is configurable via
-`LOG_RETENTION_DAYS` in `.env` (EDG-16 AC10). Enforcement (e.g.
+`LOG_RETENTION_DAYS` in `.env`. Enforcement (e.g.
 logrotate) is provided as an opt-in example
 (`edge-installer/config/logrotate-edge-snn.example`), not automated by
 install.sh.
@@ -152,15 +149,15 @@ archive (`images/edge-images-{semver}.tar.gz`, produced by
 `docker save snn-edge-ui snn-edge-api snn-edge-db | gzip`), plus a
 `images/DIGESTS` manifest used by install.sh to verify loaded image
 integrity post-load. There is no partial/API-only install path - all
-three images must exist before a bundle can be built (ADR-014).
+three images must exist before a bundle can be built.
 
 ---
 
 # Deployment Model
 
-EDG-16 creates versioned images.
+Container images are created versioned.
 
-EDG-15 packages them.
+Installer package bundles them.
 
 ```text
 GitLab

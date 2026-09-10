@@ -1,6 +1,6 @@
-# Install the Edge App Platform
+# Install the Smith+Nephew Hub
 
-To install the Smith+Nephew Edge App Platform, you must ensure that the following system requirements are met, verify your installation package, and then run the installer.
+To install the Smith+Nephew Hub, you must ensure that the following system requirements are met, verify your installation package, and then run the installer.
 
 Installation runs entirely from the files included in this package. Your server does not need internet access to install or run the platform.
 
@@ -12,9 +12,9 @@ The platform consists of three services that work together:
 
 |Service|Role|Network exposure|
 |-|-|-|
-|`edge-ui`|Web interface (HTTPS)|Port 443, and port 80 which redirects to 443|
-|`edge-api`|Application server|Internal only, not reachable from outside this host|
-|`edge-db`|Database|Internal only, not reachable from outside this host|
+|`hub-ui`|Web interface (HTTPS)|Port 443, and port 80 which redirects to 443|
+|`hub-api`|Application server|Internal only, not reachable from outside this host|
+|`hub-db`|Database|Internal only, not reachable from outside this host|
 
 > \*\*Tip\*\* If your network team needs to open a firewall port for this server, only port 443 needs to be reachable from the workstations that will use it. Port 80 is optional and only serves the automatic redirect.
 
@@ -74,7 +74,7 @@ edge-installer/
 Before you extract anything, confirm that the package has not been corrupted or tampered with in transit:
 
 ```bash
-sha256sum edge-install-{version}-linux-x64.tar.gz
+sha256sum snn-hub-install-{version}-linux-x64.tar.gz
 ```
 
 Compare the result against the SHA-256 value provided by your Smith+Nephew representative. The two values must match exactly.
@@ -84,8 +84,8 @@ Compare the result against the SHA-256 value provided by your Smith+Nephew repre
 ### Step 2: Extract and install
 
 ```bash
-tar xzf edge-install-{version}-linux-x64.tar.gz -C /opt/edge-agent/ --strip-components=1
-cd /opt/edge-agent
+tar xzf snn-hub-install-{version}-linux-x64.tar.gz -C /opt/hub-agent/ --strip-components=1
+cd /opt/hub-agent
 sudo ./install.sh
 ```
 
@@ -102,7 +102,7 @@ sudo ./install.sh
 
 > \*\*Note\*\* Write down the certificate fingerprint printed in step 4. You need it to complete the next section.
 
-> \*\*Tip\*\* You can run `install.sh` again safely at any time, for example to install a newer package version. It does not ask for the IP address or port again, regenerate your certificate, or reset your database credentials. Everything is logged to `/var/log/edge-agent/install.log`.
+> \*\*Tip\*\* You can run `install.sh` again safely at any time, for example to install a newer package version. It does not ask for the IP address or port again, regenerate your certificate, or reset your database credentials. Everything is logged to `/var/log/hub-agent/install.log`.
 
 ### Step 3: Open the setup wizard
 

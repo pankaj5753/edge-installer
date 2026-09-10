@@ -1,73 +1,73 @@
 services:
-  edge-db:
-    image: snn-edge-db:${DB_IMAGE_TAG}
-    container_name: edge-db
+  hub-db:
+    image: snn-hub-db:${DB_IMAGE_TAG}
+    container_name: hub-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${EDGE_DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${EDGE_DB_NAME}
-      MYSQL_USER: ${EDGE_DB_USER}
-      MYSQL_PASSWORD: ${EDGE_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${HUB_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${HUB_DB_NAME}
+      MYSQL_USER: ${HUB_DB_USER}
+      MYSQL_PASSWORD: ${HUB_DB_PASSWORD}
     volumes:
-      - edge-db-data:/var/lib/mysql
+      - hub-db-data:/var/lib/mysql
     networks:
-      - edge-net
+      - hub-net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${EDGE_DB_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${HUB_DB_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
 
-  edge-api:
-    image: snn-edge-api:${API_IMAGE_TAG}
-    container_name: edge-api
+  hub-api:
+    image: snn-hub-api:${API_IMAGE_TAG}
+    container_name: hub-api
     restart: unless-stopped
     environment:
       # application.yml binds datasource.* to these custom names (DB_URL/
       # DB_USERNAME/DB_PASSWORD), not Spring's standard SPRING_DATASOURCE_*
       # - and its entrypoint preserves these across sourcing .env.qa so the
-      # local edge-db is used instead of .env.qa's QA cloud database.
-      DB_URL: jdbc:mysql://edge-db:3306/${EDGE_DB_NAME}
-      DB_USERNAME: ${EDGE_DB_USER}
-      DB_PASSWORD: ${EDGE_DB_PASSWORD}
+      # local hub-db is used instead of .env.qa's QA cloud database.
+      DB_URL: jdbc:mysql://hub-db:3306/${HUB_DB_NAME}
+      DB_USERNAME: ${HUB_DB_USER}
+      DB_PASSWORD: ${HUB_DB_PASSWORD}
       LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
     volumes:
-      - ./certs/keystore.p12:/etc/edge-api/keystore.p12:ro
-      - edge-logs:/var/log/edge-snn
+      - ./certs/keystore.p12:/etc/hub-api/keystore.p12:ro
+      - hub-logs:/var/log/hub-snn
     depends_on:
-      edge-db:
+      hub-db:
         condition: service_healthy
     networks:
-      - edge-net
+      - hub-net
     healthcheck:
-      # edge-api serves HTTPS on 443 via the mounted keystore (application.yml
-      # server.ssl.*); hits its own /api/health, not generic actuator (EDG-16 AC7).
+      # hub-api serves HTTPS on 443 via the mounted keystore (application.yml
+      # server.ssl.*); hits its own /api/health, not generic actuator.
       test: ["CMD-SHELL", "curl -fk -s https://localhost:443/api/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
 
-  edge-ui:
-    image: snn-edge-ui:${UI_IMAGE_TAG}
-    container_name: edge-ui
+  hub-ui:
+    image: snn-hub-ui:${UI_IMAGE_TAG}
+    container_name: hub-ui
     restart: unless-stopped
     ports:
       - "80:80"
       - "${BIND_PORT:-443}:443"
     volumes:
       - ./certs:/etc/nginx/certs:ro
-      - edge-logs:/var/log/edge-snn
+      - hub-logs:/var/log/hub-snn
     environment:
       LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
     depends_on:
-      edge-api:
+      hub-api:
         condition: service_healthy
     networks:
-      - edge-net
+      - hub-net
     healthcheck:
-      # Process-level check (EDG-16 AC7: "Nginx checks its own process").
+      # Process-level check: Nginx checks its own process.
       test: ["CMD-SHELL", "pgrep nginx > /dev/null || exit 1"]
       interval: 10s
       timeout: 5s
@@ -75,11 +75,11 @@ services:
       start_period: 15s
 
 networks:
-  edge-net:
+  hub-net:
     driver: bridge
 
 volumes:
-  edge-db-data:
-    name: edge-db-data
-  edge-logs:
-    name: edge-logs
+  hub-db-data:
+    name: hub-db-data
+  hub-logs:
+    name: hub-logs

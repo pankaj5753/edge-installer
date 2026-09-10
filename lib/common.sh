@@ -7,12 +7,12 @@ ENV_FILE="${SCRIPT_DIR}/.env"
 IMAGES_DIR="${SCRIPT_DIR}/images"
 CERTS_DIR="${SCRIPT_DIR}/certs"
 
-log()  { printf '[edge-installer] %s\n' "$*"; }
-warn() { printf '[edge-installer] WARNING: %s\n' "$*" >&2; }
-die()  { printf '[edge-installer] ERROR: %s\n' "$*" >&2; exit 1; }
+log()  { printf '[hub-installer] %s\n' "$*"; }
+warn() { printf '[hub-installer] WARNING: %s\n' "$*" >&2; }
+die()  { printf '[hub-installer] ERROR: %s\n' "$*" >&2; exit 1; }
 
 # Loads .env into the current shell's environment, creating it from
-# .env.example on first run (mode 600 - EDG-15 AC11).
+# .env.example on first run (mode 600).
 load_env() {
     if [[ ! -f "${ENV_FILE}" ]]; then
         log "No .env found - creating from .env.example"
@@ -39,10 +39,10 @@ set_env_var() {
 
 # Force-syncs UI_IMAGE_TAG/API_IMAGE_TAG/DB_IMAGE_TAG from this bundle's
 # .env.example into .env on every run. Unlike STATIC_IP/BIND_PORT/DB
-# passwords (set once, then left alone per EDG-15 AC12), image tags are
-# release-pinned by whichever bundle is currently installed, not a
-# persisted host choice - re-running install.sh with a newer bundle must
-# always pick up its images, not silently keep running an older one.
+# passwords (set once, then left alone), image tags are release-pinned by
+# whichever bundle is currently installed, not a persisted host choice -
+# re-running install.sh with a newer bundle must always pick up its images,
+# not silently keep running an older one.
 sync_image_tags() {
     local key value
     for key in UI_IMAGE_TAG API_IMAGE_TAG DB_IMAGE_TAG; do
@@ -66,7 +66,7 @@ os_pretty_name() {
     fi
 }
 
-# Supported OSes per EDG-15 AC5: Ubuntu 22.04/24.04/26.04 LTS, RHEL 8, RHEL 9.
+# Supported OSes: Ubuntu 22.04/24.04/26.04 LTS, RHEL 8, RHEL 9.
 os_supported() {
     [[ -f /etc/os-release ]] || return 1
     # shellcheck disable=SC1091
@@ -79,12 +79,11 @@ os_supported() {
 }
 
 # Verifies the combined image archive's SHA-256 against the value recorded
-# in images/DIGESTS at release-build time (EDG-15 AC11), before docker load
-# touches it. Deliberately a plain file checksum rather than a per-image
-# Docker ID comparison - Docker's internal image IDs are computed
-# differently across Engine versions/storage backends for identical image
-# content, which caused false-positive mismatches between the build host
-# and the install host.
+# in images/DIGESTS at release-build time, before docker load touches it.
+# Deliberately a plain file checksum rather than a per-image Docker ID
+# comparison - Docker's internal image IDs are computed differently across
+# Engine versions/storage backends for identical image content, which caused
+# false-positive mismatches between the build host and the install host.
 verify_archive_checksum() {
     local archive="$1" archive_name expected actual
     archive_name="$(basename "${archive}")"
@@ -96,13 +95,13 @@ verify_archive_checksum() {
 }
 
 # Polls `docker compose ps` health status for all three services until
-# healthy or the timeout (seconds) elapses (EDG-15 AC11).
+# healthy or the timeout (seconds) elapses.
 wait_for_health() {
     local timeout="$1" elapsed=0 all_healthy svc status
     log "Waiting for containers to become healthy (up to ${timeout}s)..."
     while (( elapsed < timeout )); do
         all_healthy=1
-        for svc in edge-db edge-api edge-ui; do
+        for svc in hub-db hub-api hub-ui; do
             status="$(docker compose ps --format '{{.Health}}' "${svc}" 2>/dev/null || true)"
             [[ "${status}" == "healthy" ]] || all_healthy=0
         done

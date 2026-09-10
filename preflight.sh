@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Verifies the host meets the requirements in EDG-15 AC11 before install.sh
-# touches anything. Writes preflight-report.txt and aborts on any failure.
-# Safe to run repeatedly and on its own.
+# Verifies the host meets the requirements before install.sh touches anything.
+# Writes preflight-report.txt and aborts on any failure. Safe to run
+# repeatedly and on its own.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,7 +11,7 @@ source "${SCRIPT_DIR}/lib/common.sh"
 REPORT="${SCRIPT_DIR}/preflight-report.txt"
 FAILED=0
 
-printf 'Edge Agent Platform preflight report - %s\n\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "${REPORT}"
+printf 'Smith+Nephew Hub preflight report - %s\n\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "${REPORT}"
 
 # record <PASS|FAIL> <description> [remediation]
 record() {
@@ -20,9 +20,9 @@ record() {
     if [[ "${status}" == "PASS" ]]; then
         log "PASS - ${desc}"
     else
-        printf '[edge-installer] FAIL - %s\n' "${desc}" >&2
+        printf '[hub-installer] FAIL - %s\n' "${desc}" >&2
         if [[ -n "${remediation}" ]]; then
-            printf '[edge-installer]        Remediation: %s\n' "${remediation}" >&2
+            printf '[hub-installer]        Remediation: %s\n' "${remediation}" >&2
             printf '    Remediation: %s\n' "${remediation}" >> "${REPORT}"
         fi
         FAILED=1
@@ -48,7 +48,7 @@ else
     record FAIL "RAM: ${RAM_GB}GB (>= 8GB required)" "Provision a host with at least 8GB RAM."
 fi
 
-# --- Disk (sized for loaded images plus headroom, EDG-15 AC11) ---------
+# --- Disk (sized for loaded images plus headroom) -----------------------
 AVAIL_KB="$(df -Pk "${SCRIPT_DIR}" | awk 'NR==2 {print $4}')"
 AVAIL_GB=$(( AVAIL_KB / 1024 / 1024 ))
 if [[ "${AVAIL_KB}" -ge 104857600 ]]; then
@@ -86,7 +86,7 @@ else
     record FAIL "OpenSSL installed" "Install openssl via your OS package manager."
 fi
 
-# --- Supported OS (EDG-15 AC5) --------------------------------------------
+# --- Supported OS -------------------------------------------------------
 if os_supported; then
     record PASS "OS supported: $(os_pretty_name)"
 else

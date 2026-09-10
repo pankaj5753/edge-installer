@@ -4,11 +4,11 @@
 
 Decision:
 
-EDG-16 must be implemented before EDG-15.
+Container images must be built before the installer.
 
 Reason:
 
-EDG-15 consumes EDG-16 outputs.
+The installer consumes container image outputs.
 
 Status:
 
@@ -185,7 +185,7 @@ Create dedicated edge-installer repository.
 
 Purpose:
 
-Implement EDG-15.
+Implement hospital deployment and installation infrastructure.
 
 Status:
 
@@ -201,21 +201,15 @@ Final image names are `snn-edge-ui`, `snn-edge-api`, `snn-edge-db`.
 
 Reason:
 
-HANDOFF.md/ADR-004 (`snn-edge-db`, `snn-edge`), EDG-16
-(`snn-edge-ui`, `snn-edge-api`), and EDG-15's example command
-(`edge-agent`, `edge-db`, `nginx`) all used different names. Confirmed
-by the requester on 2026-07-29 as `snn-edge-ui` / `snn-edge-api` /
-`snn-edge-db`.
+Multiple naming conventions were in use across different parts of the
+project. Standardized on `snn-edge-ui` / `snn-edge-api` / `snn-edge-db`
+as the canonical names on 2026-07-29.
 
 Follow-up:
 
-`sandbox/bridge/snn-edge` (current edge-api ECR repo name) predates this
-confirmation and diverges on two counts: repo name lacks the `-api`
-suffix, and existing tags (`snn-edge-api-2/3/5`) are a build counter
-rather than semver. edge-db's repo (`sandbox/bridge/snn-edge-db`,
-tagged `1.0.4`) is the correct reference pattern. ECR can't rename a
-repo in place, so this needs a new repo, not a fix to the existing one.
-See HANDOFF.md edge-api section. Since resolved.
+Legacy ECR repository `sandbox/bridge/snn-edge` predates the naming
+standardization and uses older tag conventions. The canonical approach is
+to use the standardized image names with semantic versioning (e.g., `1.0.0`).
 
 Status:
 
@@ -227,19 +221,18 @@ Accepted
 
 Decision:
 
-The database password install.sh writes to `.env` (EDG-15 AC11) is an
+The database password install.sh writes to `.env` is an
 internal/infrastructure credential - used only for container-to-container
 MySQL connections - and is distinct from hospital/cloud-facility
 credentials, which are entered later via the Cloud Configuration screen
-and are never stored in `.env` (EDG-16 AC6).
+and are never stored in `.env`.
 
 Reason:
 
-EDG-15 AC11 explicitly requires install.sh to generate and store a DB
-password in `.env`; EDG-16 AC6 explicitly forbids storing secrets in
-`.env`. Read literally these conflict. Treating them as two different
-credential types resolves the conflict without contradicting either
-ticket.
+Installation requires generating a database password for the local MySQL
+container. This internal/infrastructure credential is separate from
+hospital and cloud-facility credentials, which are facility-specific and
+must be managed through the application's UI instead.
 
 Status:
 
@@ -251,19 +244,18 @@ Proposed - working assumption, pending confirmation from the stakeholder.
 
 Decision:
 
-Post-load image digest verification (EDG-15 AC11) is implemented via a
+Post-load image digest verification is implemented via a
 separate `images/DIGESTS` manifest file, checked by install.sh after
 `docker load`, rather than by pinning digests directly in the `image:`
 field of `docker-compose.yml`.
 
 Reason:
 
-EDG-15 AC11 says loaded image digests must be verified against values
-"pinned in docker-compose.yml." EDG-16 AC3/AC9 requires image versions to
-stay configurable via `.env` (`UI_IMAGE_TAG`/`API_IMAGE_TAG`), which is
-incompatible with hardcoding a digest into the same `image:` field. A
-separate manifest satisfies the verification intent of AC11 without
-breaking AC3/AC9's tag-based update flow.
+Image digests must be verified after loading the offline bundle, but
+image versions need to remain configurable via `.env` (`UI_IMAGE_TAG`/
+`API_IMAGE_TAG`) to support future updates. A separate manifest file
+satisfies verification requirements while maintaining version flexibility
+in docker-compose.yml.
 
 Status:
 
@@ -284,10 +276,9 @@ aborts otherwise.
 
 Reason:
 
-EDG-15 AC3 specifies this exact command and archive format. It implies a
-release can't be cut until all three images exist, which is a change
-from an earlier interim scaffold that supported installing edge-db +
-edge-api only while edge-ui was pending.
+A unified bundle simplifies the installation process and ensures all
+required components are present. All three images must be built and
+available before a release bundle can be packaged.
 
 Status:
 
@@ -306,19 +297,13 @@ deliberately. `BUILD_NUMBER` comes from Jenkins and is never reused.
 
 Reason:
 
-A VERSION-only tag (no build number) means every CI run overwrites the
-same ECR tag - old builds become unrecoverable, and there's no way to
-tell which Jenkins run produced a given image. A BUILD_NUMBER-only tag
-(edge-db/edge-api's original pattern) solves that but makes the "version"
-meaningless - it increments on every run regardless of whether anything
-release-worthy happened. Pushing both solves both problems: the
-build-number tag is permanent and unique (rollback/traceability), the
-VERSION tag is a deliberate, meaningful pointer to "the current release"
-(what `edge-installer` and hospital bundles reference).
+A VERSION-only tag means every CI run overwrites the same tag (old
+builds become unrecoverable). A BUILD_NUMBER-only tag makes the version
+meaningless. Using both provides: the build-number tag for permanent
+traceability and rollback capability, and the VERSION tag as a deliberate
+pointer to "the current release" (what installer bundles reference).
 
-First aligned version: all three images start at `1.0.0` under this
-scheme (edge-db's prior `1.0.4` tag predates this ADR and is superseded,
-not continued).
+First aligned version: all three images use `1.0.0` under this scheme.
 
 Status:
 
@@ -330,18 +315,15 @@ Accepted
 
 Decision:
 
-edge-api's known secret-handling issues (`.env.qa`/`.env.dev` baked into
-the image with real credentials, entrypoint hardcoding `.env.qa`
-regardless of environment - containerization review Findings 1-2) are
-explicitly deferred. The team proceeds with delivery using the current
-image as-is.
+edge-api's known secret-handling issues (development credentials baked
+into the image, entrypoint environment configuration) are explicitly
+deferred. The team proceeds with delivery using the current image as-is.
 
 Reason:
 
-Client-facing decision: this is flagged as a discussion item with the
-client, not something to block delivery on. Must be resolved before the
-image ships to a real hospital - acceptable to defer only while still in
-internal delivery/testing.
+This is flagged as a discussion item with the client, not something to
+block delivery on. Must be resolved before the image ships to a real
+hospital - acceptable to defer only while still in internal delivery/testing.
 
 Status:
 

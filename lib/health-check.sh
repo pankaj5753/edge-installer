@@ -13,15 +13,15 @@ cd "${SCRIPT_DIR}"
 
 FAILED=0
 log "Checking service health..."
-for svc in edge-db edge-api edge-ui; do
+for svc in hub-db hub-api hub-ui; do
     status=$(docker compose ps --format '{{.Health}}' "${svc}" 2>/dev/null || true)
     if [[ "${status}" == "healthy" ]]; then
         log "OK   - ${svc} is healthy"
     elif [[ -z "${status}" ]]; then
-        printf '[edge-installer] FAIL - %s is not running\n' "${svc}" >&2
+        printf '[hub-installer] FAIL - %s is not running\n' "${svc}" >&2
         FAILED=1
     else
-        printf '[edge-installer] FAIL - %s is %s\n' "${svc}" "${status}" >&2
+        printf '[hub-installer] FAIL - %s is %s\n' "${svc}" "${status}" >&2
         FAILED=1
     fi
 done

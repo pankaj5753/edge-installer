@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'UI_TAG', defaultValue: 'v01.01.00', description: 'edge-ui image tag to bundle')
-        string(name: 'API_TAG', defaultValue: 'v01.01.00', description: 'edge-api image tag to bundle')
-        string(name: 'DB_TAG', defaultValue: 'v01.01.00', description: 'edge-db image tag to bundle')
+        string(name: 'UI_TAG', defaultValue: 'v01.01.00', description: 'hub-ui image tag to bundle')
+        string(name: 'API_TAG', defaultValue: 'v01.01.00', description: 'hub-api image tag to bundle')
+        string(name: 'DB_TAG', defaultValue: 'v01.01.00', description: 'hub-db image tag to bundle')
     }
 
     environment {
@@ -54,15 +54,14 @@ pipeline {
             }
         }
 
-        // Builds dist/edge-install-{version}-linux-x64.tar.gz + .sha256.
+        // Builds dist/snn-hub-install-{version}-linux-x64.tar.gz + .sha256.
         stage('Package Bundle') {
             steps {
                 sh './release/package-release.sh'
             }
         }
 
-        // Uploads to S3 with --checksum-algorithm SHA256, prints the
-        // 7-day signed URL (EDG-15 AC1/AC4).
+        // Uploads to S3 with --checksum-algorithm SHA256, prints the 7-day signed URL.
         stage('Publish to S3') {
             steps {
                 sh './release/publish-bundle.sh'
@@ -82,12 +81,12 @@ pipeline {
 
         cleanup {
             sh '''
-                docker rmi snn-edge-ui:${UI_TAG} || true
-                docker rmi snn-edge-api:${API_TAG} || true
-                docker rmi snn-edge-db:${DB_TAG} || true
-                docker rmi ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/sandbox/bridge/snn-edge-ui:${UI_TAG} || true
-                docker rmi ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/sandbox/bridge/snn-edge-api:${API_TAG} || true
-                docker rmi ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/sandbox/bridge/snn-edge-db:${DB_TAG} || true
+                docker rmi snn-hub-ui:${UI_TAG} || true
+                docker rmi snn-hub-api:${API_TAG} || true
+                docker rmi snn-hub-db:${DB_TAG} || true
+                docker rmi ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/sandbox/bridge/snn-hub-ui:${UI_TAG} || true
+                docker rmi ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/sandbox/bridge/snn-hub-api:${API_TAG} || true
+                docker rmi ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/sandbox/bridge/snn-hub-db:${DB_TAG} || true
             '''
         }
     }

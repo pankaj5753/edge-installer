@@ -1,0 +1,17 @@
+# Example logrotate policy for the shared /var/log/hub-snn volume.
+# Not installed automatically by install.sh - the install sequence doesn't
+# include a logrotate step, so this is provided for hospital IT to install
+# manually if persistent log retention is required beyond Docker's own log driver.
+#
+# Replace <LOG_RETENTION_DAYS> with the value from .env, then install as
+# /etc/logrotate.d/snn-hub on the host (requires root).
+
+/var/lib/docker/volumes/hub-logs/_data/*.log {
+    daily
+    rotate <LOG_RETENTION_DAYS>
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}
