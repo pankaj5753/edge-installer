@@ -49,7 +49,7 @@ log "This requires internet access and will use sudo."
 if [[ "${ASSUME_YES}" -ne 1 ]]; then
     read -r -p "Install missing software now? [y/N] " REPLY
     if [[ ! "${REPLY}" =~ ^[Yy] ]]; then
-        log "Skipped - install the above manually (README.md Troubleshooting #1/#2), or re-run with --yes."
+        log "Skipped - install the above manually (Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #1/#2), or re-run with --yes."
         exit 0
     fi
 fi
@@ -86,7 +86,7 @@ case "${ID}" in
         [[ "${NEED_OPENSSL}" -eq 1 ]] && sudo dnf -y install openssl
         ;;
     *)
-        die "Automatic installation isn't supported on '${ID}' - install Docker Engine >= 24, the Compose plugin >= 2.20, and OpenSSL manually. See README.md Troubleshooting #1/#2."
+        die "Automatic installation isn't supported on '${ID}' - install Docker Engine >= 24, the Compose plugin >= 2.20, and OpenSSL manually. See Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #1/#2."
         ;;
 esac
 

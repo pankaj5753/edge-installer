@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-command -v docker > /dev/null 2>&1 || die "Docker Engine is required. See README.md Troubleshooting #1."
+command -v docker > /dev/null 2>&1 || die "Docker Engine is required. See Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #1."
 
 # --- Audit logging: everything below is captured ----------------------------
 LOG_DIR="/var/log/hub-agent"

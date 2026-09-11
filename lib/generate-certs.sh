@@ -41,7 +41,7 @@ else
         -subj "/CN=${CN}/O=Smith\+Nephew Hub Agent" \
         -addext "subjectAltName=IP:${CN}" 2>&1)"; then
         warn "${OPENSSL_OUTPUT}"
-        die "Certificate generation failed. See README.md Troubleshooting #10."
+        die "Certificate generation failed. See Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #10."
     fi
 
     chmod 600 "${CERTS_DIR}/hub.crt" "${CERTS_DIR}/hub.key"
@@ -87,7 +87,7 @@ else
         -out "${KEYSTORE}" \
         -passout pass:changeit; } 2>&1)"; then
         warn "${OPENSSL_OUTPUT}"
-        die "Keystore generation failed. See README.md Troubleshooting #10."
+        die "Keystore generation failed. See Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #10."
     fi
 
     # Mode 644 (not 600 like hub.crt/hub.key above): hub-api's container

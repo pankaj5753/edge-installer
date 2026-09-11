@@ -222,5 +222,5 @@ Secrets generated during installation.
 12. Open setup wizard in browser; verify TLS fingerprint before
     accepting the certificate trust prompt.
 
-All of steps 3-11 are logged to `/var/log/edge-agent/install.log` for
-audit. Full detail: `edge-installer/README.md`.
+All of steps 3-11 are logged to `/var/log/hub-agent/install.log` for
+audit. Full detail: `edge-installer/Smith-Nephew-Hub-Installation-Guide.md`.

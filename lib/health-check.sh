@@ -27,7 +27,7 @@ for svc in hub-db hub-api hub-ui; do
 done
 
 if [[ "${FAILED}" -ne 0 ]]; then
-    die "One or more services are unhealthy. Check 'docker compose logs' or README.md Troubleshooting #8."
+    die "One or more services are unhealthy. Check 'docker compose logs' or Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #8."
 fi
 
 log "All services are healthy."

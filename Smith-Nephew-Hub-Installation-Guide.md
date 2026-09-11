@@ -131,6 +131,23 @@ When Smith+Nephew provides an updated package:
 
 Your server's IP address and port, TLS certificate, and database credentials all stay the same. Only the application images are updated.
 
+## Release update procedure
+
+To release an update to an existing installation:
+
+1. Run `sudo ./install.sh` and wait for it to complete.
+2. Open the dashboard URL in your browser.
+3. Perform a hard refresh (press `F5`, or `Ctrl+F5` / `Cmd+Shift+R` if the old version still appears) so the browser picks up the new web assets instead of a cached copy.
+
+## IP address change procedure
+
+The TLS certificate generated during installation is bound to the server's static LAN IP address. If that IP address changes, you cannot simply re-run `install.sh` with the new value.
+
+1. Run `sudo ./uninstall.sh --purge-data` on the old IP address.
+
+   > \*\*Warning\*\* This permanently deletes the database, logs, and TLS certificate. This cannot be undone.
+2. Run `sudo ./install.sh` again and enter the new static IP address when prompted.
+
 ## Uninstall the platform
 
 ```bash
@@ -156,7 +173,7 @@ sudo ./uninstall.sh --purge-data
 |Docker Engine or Compose version is too old|See `preflight-report.txt` for the version detected, then upgrade per [docs.docker.com/engine](https://docs.docker.com/engine/install/) or [docs.docker.com/compose](https://docs.docker.com/compose/install/), or run `./check-prereqs.sh`.|
 |Unsupported operating system|Only Ubuntu 22.04, 24.04, and 26.04 LTS, and RHEL 8 and 9 on x86\_64, are supported.|
 |Insufficient CPU, RAM, or disk space|See `preflight-report.txt` for the values detected and the minimums required. Use a larger server or free up disk space.|
-|Missing image file (`images/edge-images-{version}.tar.gz`)|Re-extract the package. If the file is still missing, the download may not have completed fully. Re-download the package.|
+|Missing image file (`images/hub-images-{version}.tar.gz`)|Re-extract the package. If the file is still missing, the download may not have completed fully. Re-download the package.|
 |Checksum mismatch on the image file|Do not proceed. This indicates that the download is corrupted or incomplete. Re-download the package and re-verify it, as described in Step 1.|
 |Static IP address or port not provided|A static IP address is required. Re-run `./install.sh` and enter a valid value when prompted.|
 |Services do not become healthy within 2 minutes|Run `docker compose logs` to see what a specific service reported. Common causes are another application already using the chosen port, or the database taking longer than usual to start on a slow disk. You can also run `./lib/health-check.sh` for a status snapshot.|

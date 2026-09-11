@@ -88,9 +88,9 @@ verify_archive_checksum() {
     local archive="$1" archive_name expected actual
     archive_name="$(basename "${archive}")"
     expected="$(awk -v f="${archive_name}" '$1==f {print $2}' "${IMAGES_DIR}/DIGESTS" 2>/dev/null || true)"
-    [[ -n "${expected}" ]] || die "No pinned checksum found for ${archive_name} in images/DIGESTS. See README.md Troubleshooting #6."
+    [[ -n "${expected}" ]] || die "No pinned checksum found for ${archive_name} in images/DIGESTS. See Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #6."
     actual="$(sha256sum "${archive}" | awk '{print $1}')"
-    [[ "${actual}" == "${expected}" ]] || die "Checksum mismatch for ${archive_name}: expected ${expected}, got ${actual}. See README.md Troubleshooting #6."
+    [[ "${actual}" == "${expected}" ]] || die "Checksum mismatch for ${archive_name}: expected ${expected}, got ${actual}. See Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #6."
     log "OK   - ${archive_name} checksum verified"
 }
 
@@ -112,5 +112,5 @@ wait_for_health() {
         sleep 5
         elapsed=$((elapsed + 5))
     done
-    die "Containers did not become healthy within ${timeout}s. See README.md Troubleshooting #8."
+    die "Containers did not become healthy within ${timeout}s. See Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #8."
 }

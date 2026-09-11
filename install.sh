@@ -38,7 +38,7 @@ load_env
 
 # --- 2. Verify archive checksum, then load images ---------------------------
 ARCHIVE="${IMAGES_DIR}/hub-images-${VERSION}.tar.gz"
-[[ -f "${ARCHIVE}" ]] || die "Missing ${ARCHIVE}. See README.md Troubleshooting #5."
+[[ -f "${ARCHIVE}" ]] || die "Missing ${ARCHIVE}. See Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #5."
 verify_archive_checksum "${ARCHIVE}"
 log "Loading images from $(basename "${ARCHIVE}")..."
 docker load -i "${ARCHIVE}"
@@ -46,7 +46,7 @@ docker load -i "${ARCHIVE}"
 # --- 3. Static LAN IP and bind port (first run only) ------------------------
 if [[ -z "${STATIC_IP:-}" ]]; then
     read -r -p "Enter the static LAN IP for this host: " STATIC_IP
-    [[ -n "${STATIC_IP}" ]] || die "A static IP is required. See README.md Troubleshooting #7."
+    [[ -n "${STATIC_IP}" ]] || die "A static IP is required. See Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #7."
     set_env_var STATIC_IP "${STATIC_IP}"
 fi
 if [[ -z "${BIND_PORT:-}" ]]; then

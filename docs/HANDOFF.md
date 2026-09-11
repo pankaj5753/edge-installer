@@ -38,13 +38,13 @@ edge-db
 Hospital installation bundle:
 
 ```text
-edge-install-x.y.z-linux-x64.tar.gz
+snn-hub-install-x.y.z-linux-x64.tar.gz
 
 ├── docker-compose.yml
 ├── .env.example
 ├── install.sh
 ├── preflight.sh
-├── README.md
+├── Smith-Nephew-Hub-Installation-Guide.md
 ├── certs/              (ships empty)
 ├── images/             (single combined archive + digest manifest)
 └── lib/                (shared install/cert/health-check scripts)

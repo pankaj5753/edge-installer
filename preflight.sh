@@ -103,7 +103,7 @@ fi
 } >> "${REPORT}"
 
 if [[ "${FAILED}" -ne 0 ]]; then
-    die "Preflight checks failed. See ${REPORT} and README.md Troubleshooting for remediation."
+    die "Preflight checks failed. See ${REPORT} and Smith-Nephew-Hub-Installation-Guide.md Troubleshooting for remediation."
 fi
 
 log "All preflight checks passed. Report written to $(basename "${REPORT}")"
