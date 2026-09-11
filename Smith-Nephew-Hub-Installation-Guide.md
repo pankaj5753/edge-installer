@@ -60,6 +60,7 @@ edge-installer/
 ├── preflight.sh            # Run automatically by install.sh - checks your server meets the requirements above
 ├── docker-compose.yml      # Defines the three services
 ├── .env.example            # Configuration template (install.sh copies this to .env on first run)
+├── .env.prod.example       # Application release-tag template (install.sh copies this to .env.prod on first run)
 ├── VERSION
 ├── lib/                    # Helper scripts used by install.sh
 │   └── health-check.sh     # Run any time after install to check that everything is still healthy

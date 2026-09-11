@@ -1,6 +1,8 @@
 # Generated at install time - never commit real secrets or certs
 .env
 .env.bak
+.env.prod
+.env.prod.bak
 certs/*.crt
 certs/*.key
 install.log

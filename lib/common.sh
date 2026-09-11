@@ -4,6 +4,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${SCRIPT_DIR}/.env"
+ENV_PROD_FILE="${SCRIPT_DIR}/.env.prod"
 IMAGES_DIR="${SCRIPT_DIR}/images"
 CERTS_DIR="${SCRIPT_DIR}/certs"
 
@@ -25,15 +26,16 @@ load_env() {
     set +a
 }
 
-# Idempotently sets KEY=VALUE in .env - updates an existing line in place,
-# or appends if the key isn't present yet.
+# Idempotently sets KEY=VALUE in a file - updates an existing line in
+# place, or appends if the key isn't present yet. Defaults to .env; pass a
+# third argument to target a different file (e.g. .env.prod).
 set_env_var() {
-    local key="$1" value="$2"
-    if grep -q "^${key}=" "${ENV_FILE}" 2>/dev/null; then
-        sed -i.bak "s|^${key}=.*|${key}=${value}|" "${ENV_FILE}"
-        rm -f "${ENV_FILE}.bak"
+    local key="$1" value="$2" file="${3:-${ENV_FILE}}"
+    if grep -q "^${key}=" "${file}" 2>/dev/null; then
+        sed -i.bak "s|^${key}=.*|${key}=${value}|" "${file}"
+        rm -f "${file}.bak"
     else
-        printf '%s=%s\n' "${key}" "${value}" >> "${ENV_FILE}"
+        printf '%s=%s\n' "${key}" "${value}" >> "${file}"
     fi
 }
 
@@ -50,6 +52,23 @@ sync_image_tags() {
         [[ -n "${value}" ]] || die "Missing ${key} in .env.example - bundle is corrupt."
         set_env_var "${key}" "${value}"
     done
+}
+
+# Force-syncs APP_RELEASE_TAG into .env.prod (creating it from
+# .env.prod.example on first run) from this bundle's VERSION file, on every
+# run - same always-refresh treatment as sync_image_tags above. hub-api
+# reads this via docker-compose.yml's env_file to report its running
+# version (see application.yml's spring.application.version).
+sync_release_tag() {
+    local version
+    if [[ ! -f "${ENV_PROD_FILE}" ]]; then
+        log "No .env.prod found - creating from .env.prod.example"
+        cp "${SCRIPT_DIR}/.env.prod.example" "${ENV_PROD_FILE}"
+        chmod 600 "${ENV_PROD_FILE}"
+    fi
+    version="$(tr -d '[:space:]' < "${SCRIPT_DIR}/VERSION")"
+    [[ -n "${version}" ]] || die "VERSION file is empty - bundle is corrupt."
+    set_env_var APP_RELEASE_TAG "${version}" "${ENV_PROD_FILE}"
 }
 
 # version_ge A B --> exit 0 if A >= B (dotted-numeric version compare).

@@ -23,6 +23,11 @@ services:
     image: snn-hub-api:${API_IMAGE_TAG}
     container_name: hub-api
     restart: unless-stopped
+    env_file:
+      # Carries APP_RELEASE_TAG only - install.sh writes it from VERSION on
+      # every run. DB_* and LOG_RETENTION_DAYS stay in `environment:` below,
+      # which takes precedence over env_file for any overlapping key.
+      - .env.prod
     environment:
       # application.yml binds datasource.* to these custom names (DB_URL/
       # DB_USERNAME/DB_PASSWORD), not Spring's standard SPRING_DATASOURCE_*

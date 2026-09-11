@@ -83,7 +83,7 @@ done
 
 if [[ "${PURGE_DATA}" -eq 1 ]]; then
     log "Removing generated TLS certificate and .env (database credentials)..."
-    rm -f "${CERTS_DIR}/hub.crt" "${CERTS_DIR}/hub.key" "${ENV_FILE}"
+    rm -f "${CERTS_DIR}/hub.crt" "${CERTS_DIR}/hub.key" "${ENV_FILE}" "${ENV_PROD_FILE}"
 fi
 
 log "Uninstall complete."

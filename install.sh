@@ -33,6 +33,10 @@ load_env
 sync_image_tags
 load_env
 
+# --- 0b. Sync APP_RELEASE_TAG into .env.prod from this bundle's VERSION ----
+# (always refreshed - see sync_release_tag in lib/common.sh)
+sync_release_tag
+
 # --- 1. Preflight (writes preflight-report.txt, aborts on failure) --------
 "${SCRIPT_DIR}/preflight.sh"
 
