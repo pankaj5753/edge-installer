@@ -40,7 +40,7 @@ services:
       LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
     volumes:
       - ./certs/keystore.p12:/etc/hub-api/keystore.p12:ro
-      - hub-logs:/var/log/hub-snn
+      - hub-logs:/var/log/hub-api
     depends_on:
       hub-db:
         condition: service_healthy
@@ -64,7 +64,7 @@ services:
       - "${BIND_PORT:-443}:443"
     volumes:
       - ./certs:/etc/nginx/certs:ro
-      - hub-logs:/var/log/hub-snn
+      - hub-logs:/var/log/hub-ui
     environment:
       LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
     depends_on:
