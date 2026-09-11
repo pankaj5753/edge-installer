@@ -24,9 +24,10 @@ services:
     container_name: hub-api
     restart: unless-stopped
     env_file:
-      # Carries APP_RELEASE_TAG only - install.sh writes it from VERSION on
-      # every run. DB_* and LOG_RETENTION_DAYS stay in `environment:` below,
-      # which takes precedence over env_file for any overlapping key.
+      # .env.prod is created from .env.prod.example on first run and contains
+      # all application configuration (JWT, Okta, proxy URLs, etc).
+      # DB_URL/DB_USERNAME/DB_PASSWORD in `environment:` below override the
+      # .env.prod values to ensure local hub-db is used instead of cloud DB.
       - .env.prod
     environment:
       # application.yml binds datasource.* to these custom names (DB_URL/
