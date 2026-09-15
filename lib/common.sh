@@ -7,6 +7,7 @@ ENV_FILE="${SCRIPT_DIR}/.env"
 ENV_PROD_FILE="${SCRIPT_DIR}/.env.prod"
 IMAGES_DIR="${SCRIPT_DIR}/images"
 CERTS_DIR="${SCRIPT_DIR}/certs"
+SECRETS_DIR="${SCRIPT_DIR}/secrets"
 
 log()  { printf '[hub-installer] %s\n' "$*"; }
 warn() { printf '[hub-installer] WARNING: %s\n' "$*" >&2; }

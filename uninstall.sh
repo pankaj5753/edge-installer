@@ -82,8 +82,9 @@ for ref in "snn-hub-ui:${UI_IMAGE_TAG:-}" "snn-hub-api:${API_IMAGE_TAG:-}" "snn-
 done
 
 if [[ "${PURGE_DATA}" -eq 1 ]]; then
-    log "Removing generated TLS certificate and .env (database credentials)..."
+    log "Removing generated TLS certificate, .env, and secret files (DB passwords, encryption key)..."
     rm -f "${CERTS_DIR}/hub.crt" "${CERTS_DIR}/hub.key" "${ENV_FILE}" "${ENV_PROD_FILE}"
+    rm -f "${SECRETS_DIR}/encryption_key" "${SECRETS_DIR}/db_password" "${SECRETS_DIR}/db_root_password"
 fi
 
 log "Uninstall complete."

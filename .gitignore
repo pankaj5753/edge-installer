@@ -5,6 +5,7 @@
 .env.prod.bak
 certs/*.crt
 certs/*.key
+secrets/*
 install.log
 preflight-report.txt
 

@@ -67,20 +67,39 @@ FINGERPRINT="$(openssl x509 -in "${CERTS_DIR}/hub.crt" -noout -fingerprint -sha2
 log "Certificate SHA-256 fingerprint (record for first-connection trust verification):"
 log "  ${FINGERPRINT}"
 
-# --- 6. Database credentials (idempotent) -----------------------------------
-# Infra-level MySQL connection password only - distinct from
-# hospital/cloud-facility credentials, which are entered later via the
-# Cloud Configuration screen and are never written here.
-if [[ -z "${HUB_DB_PASSWORD:-}" ]]; then
-    set_env_var HUB_DB_PASSWORD "$(openssl rand -base64 24)"
-    log "Generated database password"
-fi
-if [[ -z "${HUB_DB_ROOT_PASSWORD:-}" ]]; then
-    set_env_var HUB_DB_ROOT_PASSWORD "$(openssl rand -base64 24)"
-    log "Generated database root password"
-fi
-chmod 600 "${ENV_FILE}"
-load_env
+# --- 6. Docker-secret files: DB passwords + facility-credentials encryption
+# key (idempotent) ------------------------------------------------------------
+# Generated as standalone files under ./secrets/, not written into .env or
+# .env.prod, since those are the files most likely to be copied, emailed, or
+# bundled for support - see docker-compose.yml's top-level `secrets:` block
+# and application.yml's configtree import. Mode 400, owned by the container's
+# UID:GID (1001:1001, pinned in edge-api's Dockerfile) so only that process
+# can read them. Never regenerated once present - the DB passwords are
+# baked into hub-db's data volume on first init, and rotating the encryption
+# key would make previously-encrypted facility/cloud credentials undecryptable.
+CONTAINER_UID=1001
+CONTAINER_GID=1001
+mkdir -p "${SECRETS_DIR}"
+chmod 700 "${SECRETS_DIR}"
+
+generate_secret_file() {
+    local file="$1" bytes="$2" label="$3"
+    if [[ ! -s "${file}" ]]; then
+        umask 077
+        openssl rand -base64 "${bytes}" | tr -d '\n' > "${file}"
+        log "Generated ${label}."
+    else
+        log "Existing ${label} found - keeping it."
+    fi
+    chown "${CONTAINER_UID}:${CONTAINER_GID}" "${file}"
+    chmod 400 "${file}"
+}
+
+generate_secret_file "${SECRETS_DIR}/encryption_key" 32 "facility credentials encryption key"
+generate_secret_file "${SECRETS_DIR}/db_password" 24 "database password"
+generate_secret_file "${SECRETS_DIR}/db_root_password" 24 "database root password"
+
+log "Encryption key fingerprint (record for restore verification): $(sha256sum "${SECRETS_DIR}/encryption_key" | cut -d' ' -f1)"
 
 # --- 7. Start the stack ------------------------------------------------------
 log "Starting stack (docker compose up -d)..."
