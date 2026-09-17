@@ -12,12 +12,21 @@ ASSUME_YES=0
 NEED_DOCKER=0
 NEED_COMPOSE=0
 NEED_OPENSSL=0
+SNAP_DOCKER=0
 
 log "Checking for Docker Engine, Docker Compose, and OpenSSL..."
 
 if command -v docker > /dev/null 2>&1 && DOCKER_VERSION="$(docker version --format '{{.Server.Version}}' 2>/dev/null)" \
    && [[ -n "${DOCKER_VERSION}" ]] && version_ge "${DOCKER_VERSION}" "24.0.0"; then
     log "OK      - Docker Engine ${DOCKER_VERSION}"
+    # snap's Docker runs in a confined mount namespace that can't see
+    # bind-mount sources outside $HOME - breaks this app's secrets/ mounts
+    # even though the version check just passed. Replace it with apt/dnf.
+    if readlink -f "$(command -v docker)" 2>/dev/null | grep -q '^/snap/'; then
+        log "INVALID - Docker is installed via snap, which cannot bind-mount ${SCRIPT_DIR}/secrets/"
+        SNAP_DOCKER=1
+        NEED_DOCKER=1
+    fi
 else
     log "MISSING - Docker Engine >= 24"
     NEED_DOCKER=1
@@ -52,6 +61,22 @@ if [[ "${ASSUME_YES}" -ne 1 ]]; then
         log "Skipped - install the above manually (Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #1/#2), or re-run with --yes."
         exit 0
     fi
+fi
+
+if [[ "${SNAP_DOCKER}" -eq 1 ]]; then
+    log ""
+    log "Docker is currently installed via snap, which cannot bind-mount ${SCRIPT_DIR}/secrets/ -"
+    log "docker compose up would fail later with 'bind source path does not exist' even though the file is there."
+    log "This will remove the snap package (its containers/volumes/images are separate from apt's and will be deleted)."
+    if [[ "${ASSUME_YES}" -ne 1 ]]; then
+        read -r -p "Remove snap Docker and replace it with apt's docker-ce now? [y/N] " REPLY
+        if [[ ! "${REPLY}" =~ ^[Yy] ]]; then
+            log "Skipped - install docker-ce manually after removing the snap (Smith-Nephew-Hub-Installation-Guide.md Troubleshooting #1/#2)."
+            exit 0
+        fi
+    fi
+    log "Removing snap Docker..."
+    sudo snap remove docker
 fi
 
 [[ -f /etc/os-release ]] || die "Cannot detect OS - /etc/os-release not found."

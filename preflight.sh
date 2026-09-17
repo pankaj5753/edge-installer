@@ -64,6 +64,13 @@ if command -v docker > /dev/null 2>&1 && DOCKER_VERSION="$(docker version --form
     else
         record FAIL "Docker Engine: ${DOCKER_VERSION} (>= 24 required)" "Upgrade Docker Engine: https://docs.docker.com/engine/install/"
     fi
+
+    # snap's Docker runs the daemon in a confined mount namespace that can't
+    # see bind-mount sources outside $HOME - breaks the secrets/ bind mounts
+    # in docker-compose.yml even though the version check above passes.
+    if readlink -f "$(command -v docker)" 2>/dev/null | grep -q '^/snap/'; then
+        record FAIL "Docker install method: snap (incompatible)" "Snap Docker can't bind-mount paths outside \$HOME, breaking this app's secrets/ mounts. Remove it (sudo snap remove docker) and install Docker Engine via apt/dnf instead: https://docs.docker.com/engine/install/"
+    fi
 else
     record FAIL "Docker Engine installed and reachable" "Install Docker Engine >= 24: https://docs.docker.com/engine/install/"
 fi
