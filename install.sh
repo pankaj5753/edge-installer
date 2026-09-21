@@ -110,8 +110,11 @@ log "Encryption key fingerprint (record for restore verification): $(sha256sum "
 # hub-ui too. Reuses the already-loaded hub-api image rather than pulling a
 # separate tool image, since installs are offline-only.
 log "Ensuring hub-logs volume is writable by hub-api (uid/gid ${CONTAINER_UID}:${CONTAINER_GID})..."
-docker run --rm --user root -v hub-logs:/var/log/hub-api "snn-hub-api:${API_IMAGE_TAG}" \
-    chown -R "${CONTAINER_UID}:${CONTAINER_GID}" /var/log/hub-api
+# --entrypoint override is required - the image's ENTRYPOINT is exec-form
+# (sh -c "java ..."), so args appended without it are ignored and the app
+# boots instead of chown running.
+docker run --rm --user root --entrypoint sh -v hub-logs:/var/log/hub-api "snn-hub-api:${API_IMAGE_TAG}" \
+    -c "chown -R ${CONTAINER_UID}:${CONTAINER_GID} /var/log/hub-api"
 
 # --- 7. Start the stack ------------------------------------------------------
 # --force-recreate: compose doesn't reliably detect env_file content changes.
