@@ -5,12 +5,14 @@ pipeline {
         string(name: 'UI_TAG', defaultValue: 'v01.01.00', description: 'hub-ui image tag to bundle')
         string(name: 'API_TAG', defaultValue: 'v01.01.00', description: 'hub-api image tag to bundle')
         string(name: 'DB_TAG', defaultValue: 'v01.01.00', description: 'hub-db image tag to bundle')
+        choice(name: 'ENV_TIER', choices: ['qa', 'dev', 'preprod', 'prod'], description: 'Which edge-api env tier to sync JWT/Okta/proxy values from into .env.prod.example - must match the ENV_TIER used on the edge-api ECR_PUSH build that produced API_TAG. QA is currently standing in for prod.')
     }
 
     environment {
-        AWS_REGION     = "us-east-2"
-        AWS_ACCOUNT_ID = "427479402536"
-        S3_BUCKET      = "bridge-dev1-bucket-edge-app"
+        AWS_REGION          = "us-east-2"
+        AWS_ACCOUNT_ID      = "427479402536"
+        S3_BUCKET           = "bridge-dev1-bucket-edge-app"
+        ENV_ARTIFACT_BUCKET = "bridge-dev1-bucket-edge-app"
     }
 
     options {
@@ -50,6 +52,22 @@ pipeline {
                 sh '''
                     set -e
                     ./release/download-images.sh ${BUNDLE_VERSION} ${UI_TAG} ${API_TAG} ${DB_TAG}
+                '''
+            }
+        }
+
+        // Pulls the filtered env-tier snippet edge-api's ECR_PUSH build published
+        // for API_TAG (see edge-api Jenkinsfile's "Publish Env Config" stage) and
+        // merges JWT/Okta/proxy values into .env.prod.example (release/sync-env-tier.sh).
+        // Fails clearly if the matching artifact doesn't exist (e.g. API_TAG was
+        // built before this artifact existed, or ENV_TIER mismatches that build).
+        stage('Sync Env Config') {
+            steps {
+                sh '''
+                    set -e
+                    aws s3 cp "s3://${ENV_ARTIFACT_BUCKET}/hub-api-env/${API_TAG}.env" hub-api-env-tier.env
+                    ./release/sync-env-tier.sh hub-api-env-tier.env
+                    rm -f hub-api-env-tier.env
                 '''
             }
         }
