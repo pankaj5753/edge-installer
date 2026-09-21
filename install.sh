@@ -101,6 +101,18 @@ generate_secret_file "${SECRETS_DIR}/db_root_password" 24 "database root passwor
 
 log "Encryption key fingerprint (record for restore verification): $(sha256sum "${SECRETS_DIR}/encryption_key" | cut -d' ' -f1)"
 
+# --- 6b. Fix hub-logs volume ownership for hub-api (idempotent) -------------
+# hub-api and hub-ui share the hub-logs volume but run as different users
+# (hub-api as edgeapi 1001:1001, hub-ui's nginx as root). Whichever container
+# starts first seeds the volume's initial ownership - if that's hub-ui, hub-api
+# gets EACCES writing its own log file and logback silently drops all logging.
+# Root bypasses permission checks, so chowning to 1001:1001 here is safe for
+# hub-ui too. Reuses the already-loaded hub-api image rather than pulling a
+# separate tool image, since installs are offline-only.
+log "Ensuring hub-logs volume is writable by hub-api (uid/gid ${CONTAINER_UID}:${CONTAINER_GID})..."
+docker run --rm --user root -v hub-logs:/var/log/hub-api "snn-hub-api:${API_IMAGE_TAG}" \
+    chown -R "${CONTAINER_UID}:${CONTAINER_GID}" /var/log/hub-api
+
 # --- 7. Start the stack ------------------------------------------------------
 log "Starting stack (docker compose up -d)..."
 docker compose up -d
