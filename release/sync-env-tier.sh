@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
-# Merges a filtered edge-api env-tier snippet (published by edge-api's
-# Jenkinsfile ECR_PUSH mode, see "Publish Env Config" stage) into this
-# repo's .env.prod.example, key by key - so JWT/Okta/proxy values stay in
-# sync with edge-api's own .env.<tier> instead of being hand-copied.
-#
-# Not run on the hospital host - dev/CI only, same as download-images.sh.
+# Merges a filtered edge-api env-tier snippet into .env.prod.example, key by
+# key. Dev/CI only, not run on the hospital host.
 #
 # Usage: ./release/sync-env-tier.sh <path-to-filtered-env-file>
 set -euo pipefail

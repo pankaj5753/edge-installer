@@ -114,10 +114,7 @@ docker run --rm --user root -v hub-logs:/var/log/hub-api "snn-hub-api:${API_IMAG
     chown -R "${CONTAINER_UID}:${CONTAINER_GID}" /var/log/hub-api
 
 # --- 7. Start the stack ------------------------------------------------------
-# --force-recreate: compose's own recreate-detection doesn't reliably pick up
-# env_file *content* changes (e.g. a refreshed .env.prod from sync_release_tag
-# above) on an existing container from a prior install - only image/environment:
-# literal changes are guaranteed to trigger a recreate otherwise.
+# --force-recreate: compose doesn't reliably detect env_file content changes.
 log "Starting stack (docker compose up -d --force-recreate)..."
 docker compose up -d --force-recreate
 

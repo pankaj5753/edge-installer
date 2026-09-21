@@ -56,11 +56,8 @@ pipeline {
             }
         }
 
-        // Pulls the filtered env-tier snippet edge-api's ECR_PUSH build published
-        // for API_TAG (see edge-api Jenkinsfile's "Publish Env Config" stage) and
-        // merges JWT/Okta/proxy values into .env.prod.example (release/sync-env-tier.sh).
-        // Fails clearly if the matching artifact doesn't exist (e.g. API_TAG was
-        // built before this artifact existed, or ENV_TIER mismatches that build).
+        // Syncs JWT/Okta/proxy values from edge-api's published env-tier snippet
+        // into .env.prod.example (see release/sync-env-tier.sh).
         stage('Sync Env Config') {
             steps {
                 sh '''
