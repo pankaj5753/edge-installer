@@ -105,8 +105,8 @@ log "Encryption key fingerprint (record for restore verification): $(sha256sum "
 log "Starting stack (docker compose up -d)..."
 docker compose up -d
 
-# --- 8. Poll health for up to 2 minutes --------------------------------------
-wait_for_health 120
+# --- 8. Poll health for up to 3 minutes --------------------------------------
+wait_for_health 180
 
 # --- 9. Done -----------------------------------------------------------------
 log "Installation complete."
