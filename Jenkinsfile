@@ -3,9 +3,10 @@ pipeline {
 
     parameters {
         string(name: 'UI_TAG', defaultValue: 'v01.01.00', description: 'hub-ui image tag to bundle')
-        string(name: 'API_TAG', defaultValue: 'v01.01.00', description: 'hub-api image tag to bundle')
+        string(name: 'API_TAG', defaultValue: 'v01.01.00', description: 'hub-api image tag to bundle - selects which edge-api ECR_PUSH build to pull the image and published env config from')
         string(name: 'DB_TAG', defaultValue: 'v01.01.00', description: 'hub-db image tag to bundle')
-        choice(name: 'ENV_TIER', choices: ['qa', 'dev', 'preprod', 'prod'], description: 'Which edge-api env tier to sync JWT/Okta/proxy values from into .env.prod.example - must match the ENV_TIER used on the edge-api ECR_PUSH build that produced API_TAG. QA is currently standing in for prod.')
+        choice(name: 'ENV_TIER', choices: ['qa', 'dev', 'preprod', 'prod'], description: 'Which environment config (JWT/Okta/proxy values) to sync into .env.prod.example, published by edge-api under hub-api-env/<tier>/<API_TAG>.env. QA is currently standing in for prod.')
+        string(name: 'RELEASE_VERSION', defaultValue: '', description: 'Release version for this installer bundle (e.g. v01.01.00). Required - replaces manually bumping the VERSION file in git. Written into the bundle as VERSION and synced into APP_RELEASE_TAG at install time.')
     }
 
     environment {
@@ -34,13 +35,23 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    env.BUNDLE_VERSION = readFile('VERSION').trim()
+                    if (!params.RELEASE_VERSION?.trim()) {
+                        error "RELEASE_VERSION parameter is required (e.g. v01.01.00)"
+                    }
+                    env.BUNDLE_VERSION = params.RELEASE_VERSION.trim()
+                    // Overwrite the repo's VERSION file with the Jenkins-supplied
+                    // value so every downstream script/tool that reads VERSION
+                    // from disk (download-images.sh, package-release.sh,
+                    // publish-bundle.sh, and install.sh/uninstall.sh once
+                    // shipped inside the bundle) keeps working unchanged.
+                    writeFile file: 'VERSION', text: env.BUNDLE_VERSION
                 }
                 sh '''
                     echo "Bundle Version : ${BUNDLE_VERSION}"
                     echo "UI Tag         : ${UI_TAG}"
                     echo "API Tag        : ${API_TAG}"
                     echo "DB Tag         : ${DB_TAG}"
+                    echo "Env Tier       : ${ENV_TIER}"
                 '''
             }
         }
@@ -57,12 +68,14 @@ pipeline {
         }
 
         // Syncs JWT/Okta/proxy values from edge-api's published env-tier snippet
-        // into .env.prod.example (see release/sync-env-tier.sh).
+        // into .env.prod.example (see release/sync-env-tier.sh). Each
+        // environment is published under its own S3 prefix by edge-api (see
+        // edge-api's Jenkinsfile "Publish Env Config" stage).
         stage('Sync Env Config') {
             steps {
                 sh '''
                     set -e
-                    aws s3 cp "s3://${ENV_ARTIFACT_BUCKET}/hub-api-env/${API_TAG}.env" hub-api-env-tier.env
+                    aws s3 cp "s3://${ENV_ARTIFACT_BUCKET}/hub-api-env/${ENV_TIER}/${API_TAG}.env" hub-api-env-tier.env
                     ./release/sync-env-tier.sh hub-api-env-tier.env
                     rm -f hub-api-env-tier.env
                 '''
